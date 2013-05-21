@@ -3,13 +3,15 @@
                 horizontalScrollPolicy="off"
                 verticalScrollPolicy="off"
                 backgroundAlpha="0"
-                width="127" height="60">
+                width="127" height="60"
+                initialize="init()"
+        >
 
     <mx:Style>
         .hTip {
             backgroundAlpha: 1.0;
             backgroundColor: white;
-            color: #eeeeee;
+            color: #333333;
             fontWeight: bold;
         }
     </mx:Style>
@@ -44,7 +46,7 @@
     <mx:Image id="btnStop"
               source="@Embed(source='gfx/btnStop.png')"
               x="48" y="4"
-              mouseDown="Stop()"
+              mouseDown="stop()"
               visible="false"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>

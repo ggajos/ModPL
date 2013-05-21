@@ -4,47 +4,47 @@
  * Time: 18:18
  */
 package modpl {
-import flash.events.Event;
-import flash.net.URLLoader;
-import flash.net.URLLoaderDataFormat;
-import flash.net.URLRequest;
+import flash.events.Event
+import flash.net.URLLoader
+import flash.net.URLLoaderDataFormat
+import flash.net.URLRequest
 
-import neoart.flod.FileLoader;
-import neoart.flod.core.CorePlayer;
+import neoart.flod.FileLoader
+import neoart.flod.core.CorePlayer
 
 public final class ModPlayer {
     private var
         url    : URLLoader,
         loader : FileLoader,
-        player : CorePlayer;
+        player : CorePlayer
 
     public function ModPlayer() {
-        loader = new FileLoader();
+        loader = new FileLoader()
     }
 
-    public function play(path: String) {
-        url = new URLLoader();
-        url.dataFormat = URLLoaderDataFormat.BINARY;
-        url.addEventListener(Event.COMPLETE, completeHandler);
-        url.load(new URLRequest(path));
+    public function play(path: String):void {
+        url = new URLLoader()
+        url.dataFormat = URLLoaderDataFormat.BINARY
+        url.addEventListener(Event.COMPLETE, completeHandler)
+        url.load(new URLRequest(path))
     }
 
-    public function stop() {
+    public function stop():void {
         if(player) {
-            player.stop();
+            player.stop()
         }
     }
 
-    public function set volume(volume: Number) {
+    public function set volume(volume: Number):void {
         if(player) {
-            player.volume = volume;
+            player.volume = volume
         }
     }
 
     private function completeHandler(e:Event):void {
-        url.removeEventListener(Event.COMPLETE, completeHandler);
-        player = loader.load(url.data);
-        if (player && player.version) player.play();
+        url.removeEventListener(Event.COMPLETE, completeHandler)
+        player = loader.load(url.data)
+        if (player && player.version) player.play()
     }
 
 }
