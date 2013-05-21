@@ -1,7 +1,104 @@
-<?xml version="1.0"?>
-<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark">
-    <fx:Script><![CDATA[
-        import mx.controls.Alert;
-        ]]></fx:Script>
-    <s:Button click="Alert.show('Hello, world')" label="Say Hello"/>
-</s:Application>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+                layout="absolute"
+                horizontalScrollPolicy="off"
+                verticalScrollPolicy="off"
+                backgroundAlpha="0"
+                width="127" height="60">
+
+    <mx:Style>
+        .hTip {
+            backgroundAlpha: 1.0;
+            backgroundColor: white;
+            color: #eeeeee;
+            fontWeight: bold;
+        }
+    </mx:Style>
+
+    <mx:Script>
+
+		<![CDATA[
+        import modpl.ModPlayer;
+
+        private var player:ModPlayer = new ModPlayer();
+
+        private function play():void {
+            switchButtons();
+            player.play("http://mouster.ovh.org/tmp/test-module.xm");
+            updateVolume();
+        }
+
+        private function Stop():void {
+            switchButtons();
+        }
+
+        private function switchButtons():void {
+            btnStop.visible = !btnStop.visible;
+            btnPlay.visible = !btnPlay.visible;
+        }
+
+        private function updateVolume():void {
+            player.volume = volumeSlider.value/100.0;
+        }
+
+        ]]>
+	</mx:Script>
+
+    <!--Tło-->
+    <mx:Image source="@Embed(source='gfx/radioBackground.png')"
+              x="0" y="0"/>
+
+    <!--Slider głośności-->
+    <mx:HSlider id="volumeSlider"
+                x="17" y="39"
+                width="94"
+                minimum="0" maximum="100"
+                value="50"
+                dataTipPrecision="0"
+                dataTipStyleName="hTip"
+                invertThumbDirection="true"
+                showTrackHighlight="true"
+                liveDragging="true"
+                change="updateVolume()"/>
+
+    <!--Klawisze PLAY/STOP - kontrolki-->
+    <mx:Image id="btnPlay"
+              source="@Embed(source='gfx/btnPlay.png')"
+              x="48" y="4"
+              mouseDown="play()"
+              rollOverEffect="{effOver}"
+              rollOutEffect="{effOut}"/>
+
+    <mx:Image id="btnStop"
+              source="@Embed(source='gfx/btnStop.png')"
+              x="48" y="4"
+              mouseDown="Stop()"
+              visible="false"
+              rollOverEffect="{effOver}"
+              rollOutEffect="{effOut}"/>
+
+    <!--Klawisze PLAY/STOP - efekty-->
+    <mx:Glow id="effOver"
+             alphaFrom="0"
+             alphaTo="0.5"
+             blurXFrom="0"
+             blurYFrom="0"
+             blurXTo="2"
+             blurYTo="22"
+             color="white"
+             inner="true"
+             strength="2"
+            />
+
+    <mx:Glow id="effOut"
+             alphaFrom="0.5"
+             alphaTo="0"
+             blurXFrom="2"
+             blurYFrom="22"
+             blurXTo="0"
+             blurYTo="0"
+             color="white"
+             inner="true"
+             strength="2"
+            />
+
+</mx:Application>
