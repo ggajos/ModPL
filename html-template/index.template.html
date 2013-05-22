@@ -37,9 +37,7 @@
              if JavaScript disabled.
         -->
         <style type="text/css" media="screen"> 
-            html, body  { height:100%; }
-            body { margin:0; padding:0; overflow:auto; text-align:center; 
-                   background-color: ${bgcolor}; }   
+            body { margin:0; padding:0; overflow:auto; text-align:center; background-color: ${bgcolor}; }
             object:focus { outline:none; }
             #flashContent { display:none; }
         </style>
@@ -119,6 +117,12 @@
                 </object>
                 <!--<![endif]-->
             </object>
-        </noscript>     
+        </noscript>
+
+        <hr/>
+        <a href="javascript: ModPL.play(document.getElementById('targetUrl').value)">Start</a>
+        <input id="targetUrl" type="text" name="url" value="../test-module.xm"/>
+        <hr/>
+        <a href="javascript: ModPL.stop()">Stop</a>
    </body>
 </html>

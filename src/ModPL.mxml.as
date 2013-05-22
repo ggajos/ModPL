@@ -1,3 +1,5 @@
+import flash.system.Security;
+
 import modpl.ModPlayer
 
 private var player:ModPlayer = new ModPlayer()
@@ -30,6 +32,8 @@ private function updateVolume() {
 // -- EXTERNAL INTERFACE
 
 private function initExternalInterface() {
+    Security.allowDomain("*")
+    Security.allowInsecureDomain("*")
     ExternalInterface.addCallback("play", exPlay)
     ExternalInterface.addCallback("stop", exStop)
     ExternalInterface.addCallback("setVolume", exSetVolume)
