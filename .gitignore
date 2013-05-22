@@ -14,3 +14,5 @@ bin-release/
 ModPL.iml
 ModPL.ipr
 ModPL.iws
+
+out/
