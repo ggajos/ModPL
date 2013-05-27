@@ -1,32 +1,69 @@
+import flash.events.ProgressEvent;
+import flash.net.URLLoader;
+import flash.net.URLRequest;
+import flash.net.navigateToURL;
 import flash.system.Security;
 
-import modpl.ModPlayer
+import neoart.flod.FileLoader;
+import neoart.flod.core.CorePlayer;
 
-private var player:ModPlayer = new ModPlayer()
-private var modUrl:String = "http://localhost/web/mods/test-module.xm"
+private var
+        urlLoader : URLLoader,
+        player : CorePlayer,
+        loader : FileLoader = new FileLoader(),
+        modUrl : String = null;
 
 private function init() {
     initExternalInterface()
 }
 
 private function play() {
+    txtHeader.text = "Please wait"
+    txtContent.text = "loading..."
     stop()
-    player.play(modUrl)
+    urlLoader = new URLLoader()
+    urlLoader.dataFormat = URLLoaderDataFormat.BINARY
+    urlLoader.addEventListener(Event.COMPLETE, completeHandler)
+    urlLoader.addEventListener(ProgressEvent.PROGRESS, progressHandler)
+    urlLoader.load(new URLRequest(modUrl))
+}
+
+public function get title():String {
+    return player.title
+}
+
+private function progressHandler(e:ProgressEvent):void {
+    txtContent.text = Math.round(e.bytesLoaded / e.bytesTotal * 100).toString() + "%"
+}
+
+private function completeHandler(e:Event):void {
+    urlLoader.removeEventListener(ProgressEvent.PROGRESS, progressHandler)
+    urlLoader.removeEventListener(Event.COMPLETE, completeHandler)
+    player = loader.load(urlLoader.data)
+    if (player && player.version) player.play()
     updateVolume()
+    txtHeader.text = player.title
+    txtContent.text = loader.tracker
 }
 
 private function stop() {
     switchButtons()
-    player.stop()
+    if(player) {
+        player.stop()
+    }
 }
 
 private function switchButtons() {
-    btnStop.visible = !btnStop.visible
-    btnPlay.visible = !btnPlay.visible
+//    btnStop.visible = !btnStop.visible
+//    btnPlay.visible = !btnPlay.visible
 }
 
 private function updateVolume() {
     player.volume = volumeSlider.value/100.0
+}
+
+private function logo() {
+    navigateToURL(new URLRequest("http://modules.pl"), "_blank")
 }
 
 // -- EXTERNAL INTERFACE

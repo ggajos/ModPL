@@ -3,7 +3,7 @@
                 horizontalScrollPolicy="off"
                 verticalScrollPolicy="off"
                 backgroundAlpha="0"
-                width="127" height="60"
+                width="260" height="80"
                 initialize="init()"
         >
 
@@ -22,10 +22,44 @@
     <mx:Image source="@Embed(source='gfx/radioBackground.png')"
               x="0" y="0"/>
 
-    <!--Slider głośności-->
+    <!--Klawisze PLAY/STOP - kontrolki-->
+    <mx:Image id="btnPlay"
+              source="@Embed(source='gfx/btnPlay.png')"
+              x="6" y="6"
+              mouseDown="play()"
+              rollOverEffect="{effOver}"
+              rollOutEffect="{effOut}"/>
+
+    <mx:Image id="btnStop"
+              source="@Embed(source='gfx/btnStop.png')"
+              x="40" y="6"
+              mouseDown="stop()"
+              rollOverEffect="{effOver}"
+              rollOutEffect="{effOut}"/>
+
+    <mx:Image id="imgModules"
+              source="@Embed(source='gfx/logo.png')"
+              x="6" y="39"
+              mouseDown="logo()"
+              rollOverEffect="{effOver}"
+              rollOutEffect="{effOut}"/>
+
+    <mx:Text id="txtHeader"
+             x="80" y="4"
+             width="176"
+             fontWeight="bold"
+             textAlign="center"
+             text="-- modules.pl --" />
+
+    <mx:Text id="txtContent"
+             x="80" y="20"
+             width="176"
+             textAlign="center"
+             text="100% tracked music" />
+
     <mx:HSlider id="volumeSlider"
-                x="17" y="39"
-                width="94"
+                x="80" y="35"
+                width="176"
                 minimum="0" maximum="100"
                 value="50"
                 dataTipPrecision="0"
@@ -35,21 +69,14 @@
                 liveDragging="true"
                 change="updateVolume()"/>
 
-    <!--Klawisze PLAY/STOP - kontrolki-->
-    <mx:Image id="btnPlay"
-              source="@Embed(source='gfx/btnPlay.png')"
-              x="48" y="4"
-              mouseDown="play()"
-              rollOverEffect="{effOver}"
-              rollOutEffect="{effOut}"/>
-
-    <mx:Image id="btnStop"
-              source="@Embed(source='gfx/btnStop.png')"
-              x="48" y="4"
-              mouseDown="stop()"
-              visible="false"
-              rollOverEffect="{effOver}"
-              rollOutEffect="{effOut}"/>
+    <mx:Text id="txtFooter"
+             x="0" y="60"
+             text="by Grzegorz Gajos, based on Christian Corti 'FLOD'"
+             fontSize="9"
+             textAlign="center"
+             width="260"
+             color="#aaaaaa"
+            />
 
     <!--Klawisze PLAY/STOP - efekty-->
     <mx:Glow id="effOver"
