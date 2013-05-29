@@ -54,7 +54,7 @@
             var swfVersionStr = "${version_major}.${version_minor}.${version_revision}";
             // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
             var xiSwfUrlStr = "playerProductInstall.swf";
-            var flashvars = {};
+            var flashvars = {header: "flashvars-header", content: "flashvars-content"};
             var params = {};
             params.quality = "high";
             params.bgcolor = "${bgcolor}";
@@ -121,7 +121,7 @@
 
         <hr/>
         <a href="javascript: ModPL.play(document.getElementById('targetUrl').value)">Start</a>
-        <input id="targetUrl" type="text" name="url" value="../test-module.xm"/>
+        <input id="targetUrl" type="text" name="url" value="../test.zip"/>
         <hr/>
         <a href="javascript: ModPL.stop()">Stop</a>
    </body>

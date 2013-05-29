@@ -3,63 +3,73 @@
                 horizontalScrollPolicy="off"
                 verticalScrollPolicy="off"
                 backgroundAlpha="0"
-                width="260" height="80"
+                width="400" height="100"
                 initialize="init()"
         >
 
     <mx:Style>
+        * {
+            fontFamily: "Tahoma";
+            fontAntiAliasType: undefined;
+        }
         .hTip {
             backgroundAlpha: 1.0;
             backgroundColor: white;
             color: #333333;
             fontWeight: bold;
         }
+        HSlider {
+            color: black;
+        }
     </mx:Style>
 
     <mx:Script source="ModPL.mxml.as"/>
 
-    <!--Tło-->
-    <mx:Image source="@Embed(source='gfx/radioBackground.png')"
-              x="0" y="0"/>
-
     <!--Klawisze PLAY/STOP - kontrolki-->
     <mx:Image id="btnPlay"
-              source="@Embed(source='gfx/btnPlay.png')"
+              source="@Embed(source='gfx/play.png')"
               x="6" y="6"
-              mouseDown="play()"
+              mouseUp="play()"
+              rollOverEffect="{effOver}"
+              rollOutEffect="{effOut}"/>
+
+    <mx:Image id="btnPause"
+              source="@Embed(source='gfx/pause.png')"
+              x="6" y="6"
+              mouseUp="pause()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
     <mx:Image id="btnStop"
-              source="@Embed(source='gfx/btnStop.png')"
-              x="40" y="6"
-              mouseDown="stop()"
+              source="@Embed(source='gfx/stop.png')"
+              x="52" y="6"
+              mouseUp="stop()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
     <mx:Image id="imgModules"
               source="@Embed(source='gfx/logo.png')"
-              x="6" y="39"
-              mouseDown="logo()"
+              x="6" y="55"
+              mouseUp="logo()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
     <mx:Text id="txtHeader"
-             x="80" y="4"
-             width="176"
+             x="100" y="10"
+             width="300"
              fontWeight="bold"
              textAlign="center"
              text="-- modules.pl --" />
 
     <mx:Text id="txtContent"
-             x="80" y="20"
-             width="176"
+             x="100" y="30"
+             width="300"
              textAlign="center"
              text="100% tracked music" />
 
     <mx:HSlider id="volumeSlider"
-                x="80" y="35"
-                width="176"
+                x="100" y="55"
+                width="300"
                 minimum="0" maximum="100"
                 value="50"
                 dataTipPrecision="0"
@@ -70,37 +80,39 @@
                 change="updateVolume()"/>
 
     <mx:Text id="txtFooter"
-             x="0" y="60"
-             text="by Grzegorz Gajos, based on Christian Corti 'FLOD'"
+             x="100" y="80"
+             text="by Grzegorz Gajos, based on Christian Corti's 'FLOD'"
              fontSize="9"
              textAlign="center"
-             width="260"
+             width="300"
              color="#aaaaaa"
             />
 
     <!--Klawisze PLAY/STOP - efekty-->
     <mx:Glow id="effOver"
              alphaFrom="0"
-             alphaTo="0.5"
+             alphaTo="1"
              blurXFrom="0"
              blurYFrom="0"
-             blurXTo="2"
-             blurYTo="22"
+             blurXTo="5"
+             blurYTo="5"
              color="white"
              inner="true"
              strength="2"
+             duration="100"
             />
 
     <mx:Glow id="effOut"
-             alphaFrom="0.5"
+             alphaFrom="1"
              alphaTo="0"
-             blurXFrom="2"
-             blurYFrom="22"
+             blurXFrom="5"
+             blurYFrom="5"
              blurXTo="0"
              blurYTo="0"
              color="white"
              inner="true"
              strength="2"
+             duration="100"
             />
 
 </mx:Application>
