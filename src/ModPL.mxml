@@ -29,6 +29,7 @@
     <mx:Image id="btnPlay"
               source="@Embed(source='gfx/play.png')"
               x="6" y="6"
+              smoothBitmapContent="true"
               mouseUp="play()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
@@ -36,6 +37,7 @@
     <mx:Image id="btnPause"
               source="@Embed(source='gfx/pause.png')"
               x="6" y="6"
+              smoothBitmapContent="true"
               mouseUp="pause()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
@@ -43,6 +45,7 @@
     <mx:Image id="btnStop"
               source="@Embed(source='gfx/stop.png')"
               x="52" y="6"
+              smoothBitmapContent="true"
               mouseUp="stop()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
@@ -88,31 +91,18 @@
              color="#aaaaaa"
             />
 
-    <!--Klawisze PLAY/STOP - efekty-->
-    <mx:Glow id="effOver"
-             alphaFrom="0"
-             alphaTo="1"
-             blurXFrom="0"
-             blurYFrom="0"
-             blurXTo="5"
-             blurYTo="5"
-             color="white"
-             inner="true"
-             strength="2"
-             duration="100"
+    <mx:Zoom
+            id="effOver"
+            zoomWidthFrom="1" zoomHeightFrom="1"
+            zoomWidthTo="1.1" zoomHeightTo="1.1"
+            duration="100"
             />
 
-    <mx:Glow id="effOut"
-             alphaFrom="1"
-             alphaTo="0"
-             blurXFrom="5"
-             blurYFrom="5"
-             blurXTo="0"
-             blurYTo="0"
-             color="white"
-             inner="true"
-             strength="2"
-             duration="100"
+    <mx:Zoom
+            id="effOut"
+            zoomWidthFrom="1.1" zoomHeightFrom="1.1"
+            zoomWidthTo="1" zoomHeightTo="1"
+            duration="100"
             />
 
 </mx:Application>
