@@ -6,7 +6,6 @@
                 width="400" height="100"
                 initialize="init()"
         >
-
     <mx:Style>
         * {
             fontFamily: "Tahoma";
@@ -30,7 +29,7 @@
               source="@Embed(source='gfx/play.png')"
               x="6" y="6"
               smoothBitmapContent="true"
-              mouseUp="play()"
+              mouseUp="viewPlay()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
@@ -38,7 +37,7 @@
               source="@Embed(source='gfx/pause.png')"
               x="6" y="6"
               smoothBitmapContent="true"
-              mouseUp="pause()"
+              mouseUp="viewPause()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
@@ -46,14 +45,14 @@
               source="@Embed(source='gfx/stop.png')"
               x="52" y="6"
               smoothBitmapContent="true"
-              mouseUp="stop()"
+              mouseUp="viewStop()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
     <mx:Image id="imgModules"
               source="@Embed(source='gfx/logo.png')"
               x="6" y="55"
-              mouseUp="logo()"
+              mouseUp="viewLogo()"
               rollOverEffect="{effOver}"
               rollOutEffect="{effOut}"/>
 
@@ -62,25 +61,25 @@
              width="300"
              fontWeight="bold"
              textAlign="center"
-             text="-- modules.pl --" />
+             text="N/A"/>
 
     <mx:Text id="txtContent"
              x="100" y="30"
              width="300"
              textAlign="center"
-             text="100% tracked music" />
+             text="N/A" />
 
     <mx:HSlider id="volumeSlider"
                 x="100" y="55"
                 width="300"
                 minimum="0" maximum="100"
-                value="50"
+                value="100"
                 dataTipPrecision="0"
                 dataTipStyleName="hTip"
                 invertThumbDirection="true"
                 showTrackHighlight="true"
                 liveDragging="true"
-                change="updateVolume()"/>
+                change="viewUpdateVolume()"/>
 
     <mx:Text id="txtFooter"
              x="100" y="80"

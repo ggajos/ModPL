@@ -1,5 +1,3 @@
-import com.opentangerine.utils.FlashVars;
-
 import flash.events.ProgressEvent;
 import flash.external.ExternalInterface;
 import flash.net.URLLoader;
@@ -17,23 +15,18 @@ private var
         player : CorePlayer,
         loader : FileLoader = new FileLoader(),
         modUrl : String,
-        paused : Boolean = false;
+        paused : Boolean = false,
+        definedHeader: String = "N/A",
+        definedContent: String = "N/A",
+        volume : Number;
 
 private function init() {
     initExternalInterface()
-    initUI();
-}
-
-private function initUI() {
-    btnPlay.visible = false;
-    btnPause.visible = false;
-    btnStop.visible = false;
-    txtHeader.text = FlashVars.getInstance().getValue("header");
-    txtContent.text = FlashVars.getInstance().getValue("content");
-}
-
-public function get title():String {
-    return player.title
+    uiPaused();
+    txtHeader.text = definedHeader;
+    txtContent.text = definedContent;
+    modUrl = "../test.zip"
+    viewPlay()
 }
 
 private function progressHandler(e:ProgressEvent):void {
@@ -49,26 +42,34 @@ private function completeHandler(e:Event):void {
         var zip = new ZipFile(urlLoader.data)
         player = loader.load(zip.uncompress(zip.entries[0]))
     } else {
-        player = loader.load(urlLoader.data)
+        try {
+            player = loader.load(urlLoader.data)
+        } catch(ex: Error) {
+            uiError("Unknown file format");
+        }
     }
-    if (player && player.version) player.play()
-    updateVolume()
-    txtHeader.text = player.title
-    txtContent.text = loader.tracker
-    btnPause.visible = true;
-    btnStop.visible = true;
+    if (player) {
+        player.play()
+    }
+    viewUpdateVolume()
+    uiPlaying();
 }
 
-private function play() {
+// View =======================================================================
+
+private function viewPlay() {
+    if(!modUrl) {
+        return
+    }
     if(paused) {
         player.play()
         paused = false;
-        btnPause.visible = true;
-        btnPlay.visible = false;
+        uiPaused();
     } else {
-        txtHeader.text = "Please wait"
-        txtContent.text = "loading..."
-        stop()
+        uiPleaseWait();
+        if(player) {
+            player.stop();
+        }
         urlLoader = new URLLoader()
         urlLoader.dataFormat = URLLoaderDataFormat.BINARY
         urlLoader.addEventListener(Event.COMPLETE, completeHandler)
@@ -77,51 +78,94 @@ private function play() {
     }
 }
 
-private function pause() {
+private function viewPause() {
+    uiPaused();
     paused = true;
-    btnPlay.visible = true;
-    btnPause.visible = false;
     player.pause();
 }
 
-private function stop() {
-    btnPlay.visible = true;
-    btnPause.visible = false;
+private function viewStop() {
+    if(!player) {
+        return
+    }
+    uiPaused();
     paused = false;
+    player.stop()
+}
+
+private function viewUpdateVolume() {
+    volume = volumeSlider.value/100.0
     if(player) {
-        player.stop()
+        player.volume = volume;
     }
 }
 
-private function updateVolume() {
-    player.volume = volumeSlider.value/100.0
-}
-
-private function logo() {
+private function viewLogo() {
     navigateToURL(new URLRequest("http://modules.pl"), "_blank")
 }
 
-// -- EXTERNAL INTERFACE
+// External Interface =========================================================
 
 private function initExternalInterface() {
     if(ExternalInterface.available) {
         Security.allowDomain("*")
         Security.allowInsecureDomain("*")
-        ExternalInterface.addCallback("play", exPlay)
-        ExternalInterface.addCallback("stop", exStop)
+        ExternalInterface.addCallback("viewPlay", exPlay)
+        ExternalInterface.addCallback("viewStop", exStop)
         ExternalInterface.addCallback("setVolume", exSetVolume)
+        ExternalInterface.addCallback("setHeader", exSetHeader)
+        ExternalInterface.addCallback("setContent", exSetContent)
     }
 }
 
 private function exPlay(path: String) {
     modUrl = path
-    play()
+    viewPlay()
 }
 
 private function exStop() {
-    stop()
+    viewStop()
 }
 
 private function exSetVolume(volume: Number) {
     player.volume = volume
+}
+
+private function exSetHeader(header: String) {
+    txtHeader.text = header;
+}
+
+private function exSetContent(content: String) {
+    txtContent.text = content;
+}
+
+// UI updates =================================================================
+
+private function uiPaused() {
+    btnPause.visible = false;
+    btnPlay.visible = true;
+    btnStop.visible = true;
+}
+
+private function uiPlaying() {
+    btnPause.visible = true;
+    btnPlay.visible = false;
+    btnStop.visible = true;
+    uiTextDefined();
+}
+
+private function uiError(error: String) {
+    uiPaused();
+    txtHeader.text = "ERROR";
+    txtContent.text = error;
+}
+
+private function uiPleaseWait() {
+    txtHeader.text = "Please wait";
+    txtContent.text = "loading...";
+}
+
+private function uiTextDefined() {
+    txtHeader.text = definedHeader;
+    txtContent.text = definedContent;
 }
