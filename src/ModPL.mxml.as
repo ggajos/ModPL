@@ -1,14 +1,14 @@
-import flash.events.ProgressEvent;
-import flash.external.ExternalInterface;
-import flash.net.URLLoader;
-import flash.net.URLRequest;
-import flash.net.navigateToURL;
-import flash.system.Security;
+import flash.events.ProgressEvent
+import flash.external.ExternalInterface
+import flash.net.URLLoader
+import flash.net.URLRequest
+import flash.net.navigateToURL
+import flash.system.Security
 
-import neoart.flip.ZipFile;
+import neoart.flip.ZipFile
 
-import neoart.flod.FileLoader;
-import neoart.flod.core.CorePlayer;
+import neoart.flod.FileLoader
+import neoart.flod.core.CorePlayer
 
 private var
         urlLoader : URLLoader,
@@ -18,15 +18,13 @@ private var
         paused : Boolean = false,
         definedHeader: String = "N/A",
         definedContent: String = "N/A",
-        volume : Number;
+        volume : Number
 
 private function init() {
     initExternalInterface()
-    uiPaused();
-    txtHeader.text = definedHeader;
-    txtContent.text = definedContent;
-    modUrl = "../test.zip"
-    viewPlay()
+    uiPaused()
+    txtHeader.text = definedHeader
+    txtContent.text = definedContent
 }
 
 private function progressHandler(e:ProgressEvent):void {
@@ -45,14 +43,14 @@ private function completeHandler(e:Event):void {
         try {
             player = loader.load(urlLoader.data)
         } catch(ex: Error) {
-            uiError("Unknown file format");
+            uiError("Unknown file format")
         }
     }
     if (player) {
         player.play()
     }
     viewUpdateVolume()
-    uiPlaying();
+    uiPlaying()
 }
 
 // View =======================================================================
@@ -63,12 +61,12 @@ private function viewPlay() {
     }
     if(paused) {
         player.play()
-        paused = false;
-        uiPaused();
+        paused = false
+        uiPaused()
     } else {
-        uiPleaseWait();
+        uiPleaseWait()
         if(player) {
-            player.stop();
+            player.stop()
         }
         urlLoader = new URLLoader()
         urlLoader.dataFormat = URLLoaderDataFormat.BINARY
@@ -79,24 +77,24 @@ private function viewPlay() {
 }
 
 private function viewPause() {
-    uiPaused();
-    paused = true;
-    player.pause();
+    uiPaused()
+    paused = true
+    player.pause()
 }
 
 private function viewStop() {
     if(!player) {
         return
     }
-    uiPaused();
-    paused = false;
+    uiPaused()
+    paused = false
     player.stop()
 }
 
 private function viewUpdateVolume() {
     volume = volumeSlider.value/100.0
     if(player) {
-        player.volume = volume;
+        player.volume = volume
     }
 }
 
@@ -110,8 +108,8 @@ private function initExternalInterface() {
     if(ExternalInterface.available) {
         Security.allowDomain("*")
         Security.allowInsecureDomain("*")
-        ExternalInterface.addCallback("viewPlay", exPlay)
-        ExternalInterface.addCallback("viewStop", exStop)
+        ExternalInterface.addCallback("play", exPlay)
+        ExternalInterface.addCallback("stop", exStop)
         ExternalInterface.addCallback("setVolume", exSetVolume)
         ExternalInterface.addCallback("setHeader", exSetHeader)
         ExternalInterface.addCallback("setContent", exSetContent)
@@ -132,40 +130,42 @@ private function exSetVolume(volume: Number) {
 }
 
 private function exSetHeader(header: String) {
-    txtHeader.text = header;
+    definedHeader = header
+    txtHeader.text = header
 }
 
 private function exSetContent(content: String) {
-    txtContent.text = content;
+    definedContent = content
+    txtContent.text = content
 }
 
 // UI updates =================================================================
 
 private function uiPaused() {
-    btnPause.visible = false;
-    btnPlay.visible = true;
-    btnStop.visible = true;
+    btnPause.visible = false
+    btnPlay.visible = true
+    btnStop.visible = true
 }
 
 private function uiPlaying() {
-    btnPause.visible = true;
-    btnPlay.visible = false;
-    btnStop.visible = true;
-    uiTextDefined();
+    btnPause.visible = true
+    btnPlay.visible = false
+    btnStop.visible = true
+    uiTextDefined()
 }
 
 private function uiError(error: String) {
-    uiPaused();
-    txtHeader.text = "ERROR";
-    txtContent.text = error;
+    uiPaused()
+    txtHeader.text = "ERROR"
+    txtContent.text = error
 }
 
 private function uiPleaseWait() {
-    txtHeader.text = "Please wait";
-    txtContent.text = "loading...";
+    txtHeader.text = "Please wait"
+    txtContent.text = "loading..."
 }
 
 private function uiTextDefined() {
-    txtHeader.text = definedHeader;
-    txtContent.text = definedContent;
+    txtHeader.text = definedHeader
+    txtContent.text = definedContent
 }
