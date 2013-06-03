@@ -52,9 +52,7 @@
     <mx:Image id="imgModules"
               source="@Embed(source='gfx/logo.png')"
               x="6" y="55"
-              mouseUp="viewLogo()"
-              rollOverEffect="{effOver}"
-              rollOutEffect="{effOut}"/>
+              mouseUp="viewLogo()"/>
 
     <mx:Text id="txtHeader"
              x="100" y="10"
