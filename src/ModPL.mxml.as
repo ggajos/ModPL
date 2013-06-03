@@ -37,6 +37,7 @@ private function completeHandler(e:Event):void {
     urlLoader.removeEventListener(Event.COMPLETE, completeHandler)
     try {
         player = loader.load(urlLoader.data)
+        player.stereo = 0
         player.play()
         viewUpdateVolume()
         uiPlaying()
