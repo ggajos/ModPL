@@ -4,6 +4,7 @@ import flash.net.URLLoader
 import flash.net.URLRequest
 import flash.net.navigateToURL
 import flash.system.Security
+import flash.utils.ByteArray;
 
 import neoart.flip.ZipFile
 
@@ -34,23 +35,24 @@ private function progressHandler(e:ProgressEvent):void {
 private function completeHandler(e:Event):void {
     urlLoader.removeEventListener(ProgressEvent.PROGRESS, progressHandler)
     urlLoader.removeEventListener(Event.COMPLETE, completeHandler)
+    try {
+        player = loader.load(readData(urlLoader))
+        player.play()
+        viewUpdateVolume()
+        uiPlaying()
+    } catch(ex: Error) {
+        uiError("Unknown file format")
+    }
+}
+
+private function readData(urlLoader: URLLoader): ByteArray {
     var extension: String = modUrl.substr(modUrl.lastIndexOf(".") + 1, modUrl.length)
     if(extension == "zip") {
-        txtContent.text = "uncompressing..."
         var zip = new ZipFile(urlLoader.data)
-        player = loader.load(zip.uncompress(zip.entries[0]))
+        return zip.uncompress(zip.entries[0])
     } else {
-        try {
-            player = loader.load(urlLoader.data)
-        } catch(ex: Error) {
-            uiError("Unknown file format")
-        }
+        return urlLoader.data
     }
-    if (player) {
-        player.play()
-    }
-    viewUpdateVolume()
-    uiPlaying()
 }
 
 // View =======================================================================
