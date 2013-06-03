@@ -36,22 +36,12 @@ private function completeHandler(e:Event):void {
     urlLoader.removeEventListener(ProgressEvent.PROGRESS, progressHandler)
     urlLoader.removeEventListener(Event.COMPLETE, completeHandler)
     try {
-        player = loader.load(readData(urlLoader))
+        player = loader.load(urlLoader.data)
         player.play()
         viewUpdateVolume()
         uiPlaying()
     } catch(ex: Error) {
         uiError("Unknown file format")
-    }
-}
-
-private function readData(urlLoader: URLLoader): ByteArray {
-    var extension: String = modUrl.substr(modUrl.lastIndexOf(".") + 1, modUrl.length)
-    if(extension == "zip") {
-        var zip = new ZipFile(urlLoader.data)
-        return zip.uncompress(zip.entries[0])
-    } else {
-        return urlLoader.data
     }
 }
 
