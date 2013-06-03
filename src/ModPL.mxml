@@ -93,13 +93,13 @@
     <mx:Zoom
             id="effOver"
             zoomWidthFrom="1" zoomHeightFrom="1"
-            zoomWidthTo="1.1" zoomHeightTo="1.1"
+            zoomWidthTo="1.05" zoomHeightTo="1.05"
             duration="100"
             />
 
     <mx:Zoom
             id="effOut"
-            zoomWidthFrom="1.1" zoomHeightFrom="1.1"
+            zoomWidthFrom="1.05" zoomHeightFrom="1.05"
             zoomWidthTo="1" zoomHeightTo="1"
             duration="100"
             />
