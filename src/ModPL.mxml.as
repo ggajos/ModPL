@@ -22,10 +22,9 @@ private var
         volume : Number
 
 private function init() {
-    initExternalInterface()
     uiPaused()
-    txtHeader.text = definedHeader
-    txtContent.text = definedContent
+    uiEmpty()
+    initExternalInterface()
 }
 
 private function progressHandler(e:ProgressEvent):void {
@@ -50,12 +49,13 @@ private function completeHandler(e:Event):void {
 
 private function viewPlay() {
     if(!modUrl) {
+        uiEmpty()
         return
     }
     if(paused) {
         player.play()
         paused = false
-        uiPaused()
+        uiPlaying()
     } else {
         uiPleaseWait()
         if(player) {
@@ -145,6 +145,11 @@ private function uiPlaying() {
     btnPlay.visible = false
     btnStop.visible = true
     uiTextDefined()
+}
+
+private function uiEmpty() {
+    txtHeader.text = "INFO"
+    txtContent.text = "No module loaded"
 }
 
 private function uiError(error: String) {
