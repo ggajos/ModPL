@@ -42,11 +42,9 @@ private function completeHandler(e:Event):void {
         player = loader.load(urlLoader.data)
         player.stereoSeparation = 0
         player.filterMode = AmigaPlayer.FORCE_OFF
-        player.loop = true
+        player.volume = 1
         player.play()
-        definedHeader = player.title
         definedContent = loader.tracker
-        viewUpdateVolume()
         uiPlaying()
     } catch(ex: Error) {
         uiError("Unknown file format")
@@ -92,12 +90,12 @@ private function viewStop() {
     player.stop()
 }
 
-private function viewUpdateVolume() {
-    volume = volumeSlider.value/100.0
-    if(player) {
-        player.volume = volume
-    }
-}
+//private function viewUpdateVolume() {
+//    volume = volumeSlider.value/100.0
+//    if(player) {
+//        player.volume = volume
+//    }
+//}
 
 private function viewLogo() {
     navigateToURL(new URLRequest("http://modules.pl"), "_blank")
@@ -180,9 +178,10 @@ private function uiProgressTracker() {
     secondsTimer.start()
     secondsTimer.addEventListener(TimerEvent.TIMER, function() {
         if(player != null) {
-            var current = player.position * 100.0 / player.duration
+            var current = player.position * 200.0 / player.duration
+            current = current % (player.duration / 2000)
             progressSlider.value = current
-            txtTime.text = convertToMMSS(current) + " / " + convertToMMSS(player.duration / 1000)
+            txtTime.text = convertToMMSS(current) + " / " + convertToMMSS(player.duration / 2000)
         }
     })
 }
