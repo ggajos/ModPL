@@ -1,10 +1,10 @@
 /*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 3.0 - 2012/02/08
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -22,62 +22,69 @@ package neoart.flod.core {
   public class CoreMixer {
     public var
       player      : CorePlayer,
+      process     : Function,
       samplesTick : int;
     protected var
+      m_complete  : int,
       buffer      : Vector.<Sample>,
-      samplesLeft : int,
       remains     : int,
-      completed   : int,
+      samplesLeft : int,
       wave        : ByteArray;
 
     public function CoreMixer() {
+      bufferSize = 4096;
       wave = new ByteArray();
       wave.endian = "littleEndian";
-      bufferSize = 8192;
     }
 
     public function get bufferSize():int { return buffer.length; }
+
     public function set bufferSize(value:int):void {
       var i:int, len:int;
-      if (value == len || value < 2048) return;
+
+      if (value < 2048) return;
 
       if (!buffer) {
         buffer = new Vector.<Sample>(value, true);
       } else {
         len = buffer.length;
-        buffer.fixed = false;
+        if (len == value) return;
+
+        buffer.fixed  = false;
         buffer.length = value;
-        buffer.fixed = true;
+        buffer.fixed  = true;
       }
 
       if (value > len) {
         buffer[len] = new Sample();
 
-        for (i = ++len; i < value; ++i)
+        for (i = ++len; i < value; ++i) {
           buffer[i] = buffer[int(i - 1)].next = new Sample();
+        }
       }
     }
 
-    public function get complete():int { return completed; }
+    public function get complete():int { return m_complete; }
+
     public function set complete(value:int):void {
-      completed = value ^ player.loopSong;
+      m_complete = value ^ int(player.loop);
     }
 
-    //js function reset
+    internal function setup():void { }
+
     internal function initialize():void {
       var sample:Sample = buffer[0];
 
-      samplesLeft = 0;
+      m_complete  = 0;
       remains     = 0;
-      completed   = 0;
+      samplesLeft = 0;
 
-      while (sample) {
-        sample.l = sample.r = 0.0;
-        sample = sample.next;
-      }
+      do {
+        sample.l = 0.0;
+        sample.r = 0.0;
+      } while (sample = sample.next);
     }
 
-    //js function restore
     internal function reset():void { }
 
     internal function fast(e:SampleDataEvent):void { }
@@ -86,7 +93,7 @@ package neoart.flod.core {
 
     internal function waveform():ByteArray {
       var file:ByteArray = new ByteArray();
-      file.endian = "littleEndian";
+      file.endian = wave.endian;
 
       file.writeUTFBytes("RIFF");
       file.writeInt(wave.length + 44);
@@ -103,6 +110,7 @@ package neoart.flod.core {
       file.writeBytes(wave);
 
       file.position = 0;
+      wave.clear();
       return file;
     }
   }

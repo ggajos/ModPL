@@ -1,10 +1,10 @@
 ﻿/*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 4.1 - 2012/04/16
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -16,40 +16,36 @@
   Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
 */
 package neoart.flod {
+  import flash.net.*;
   import flash.utils.*;
   import neoart.flip.*;
   import neoart.flod.core.*;
-  import neoart.flod.deltamusic.*;
-  import neoart.flod.digitalmugician.*;
-  import neoart.flod.fred.*;
-  import neoart.flod.futurecomposer.*;
-  import neoart.flod.hippel.*;
-  import neoart.flod.hubbard.*;
-  import neoart.flod.sidmon.*;
-  import neoart.flod.soundfx.*;
-  import neoart.flod.soundmon.*;
-  import neoart.flod.trackers.*;
   import neoart.flod.fasttracker.*;
-  import neoart.flod.whittaker.*;
+  import neoart.flod.trackers.*;
+  import neoart.unpackers.*;
 
   public final class FileLoader {
     private var
-      player : CorePlayer,
       index  : int,
+      player : CorePlayer,
       amiga  : Amiga,
-      mixer  : Soundblaster;
+      mixer  : SoundBlaster;
 
     public function FileLoader() {
       amiga = new Amiga();
-      mixer = new Soundblaster();
+      mixer = new SoundBlaster();
+
+      registerAliases();
     }
 
     public function get tracker():String {
-      return (player) ? TRACKERS[index + player.version] : TRACKERS[0];
+      var index = this.index;
+      if (player) index += player.version;
+      return TRACKERS[index];
     }
 
     public function load(stream:ByteArray):CorePlayer {
-      var archive:ZipFile, id:String, value:int;
+      var archive:ZipFile, i:int, output:ByteArray, packer:Packer, type:Class;
 
       stream.endian = "littleEndian";
       stream.position = 0;
@@ -61,319 +57,144 @@ package neoart.flod {
 
       if (!stream) return null;
 
-      if (player && !(player is STPlayer)) {
+      if (player) {
         player.load(stream);
         if (player.version) return player;
       }
 
-      if (stream.length > 336) {
-        stream.position = 38;
-        id = stream.readMultiByte(20, CorePlayer.ENCODING);
+      // Players
+      for (i = 0; i < 6; ++i) {
+        type = getClassByAlias(PLAYERS[i]);
 
-        if (id == "FastTracker v2.00   " ||
-            id == "FastTracker v 2.00  " ||
-            id == "Sk@le Tracker"        ||
-            id == "MadTracker 2.0"       ||
-            id == "MilkyTracker        " ||
-            id == "DigiBooster Pro 2.18" ||
-            id.indexOf("OpenMPT") != -1) {
+        if (i == 5) {
+          player = new type(mixer);
+        } else {
+          player = new type(amiga);
+        }
 
-          player = new F2Player(mixer);
-          player.load(stream);
+        player.load(stream);
 
-          if (player.version) {
-            index = FASTTRACKER;
-            return player;
-          }
+        if (player.version) {
+          index = OFFSETS[i];
+          return player;
         }
       }
 
+      // Unpackers
       stream.endian = "bigEndian";
 
-      if (stream.length > 2105) {
-        stream.position = 1080;
-        id = stream.readMultiByte(4, CorePlayer.ENCODING);
-
-        if (id == "M.K." || id == "FLT4") {
-          player = new MKPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = NOISETRACKER;
-            return player;
-          }
-        } else if (id == "FEST") {
-          player = new HMPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = HISMASTER;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 2105) {
-        stream.position = 1080;
-        id = stream.readMultiByte(4, CorePlayer.ENCODING);
-
-        if (id == "M.K." || id == "M!K!") {
-          player = new PTPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = PROTRACKER;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 1685) {
-        stream.position = 60;
-        id = stream.readMultiByte(4, CorePlayer.ENCODING);
-
-        if (id != "SONG") {
-          stream.position = 124;
-          id = stream.readMultiByte(4, CorePlayer.ENCODING);
-        }
-
-        if (id == "SONG" || id == "SO31") {
-          player = new FXPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = SOUNDFX;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 4) {
+      for (i = 0; i < 15; ++i) {
         stream.position = 0;
-        id = stream.readMultiByte(4, CorePlayer.ENCODING);
+        type = getClassByAlias(PACKERS[i]);
 
-        if (id == "ALL ") {
-          player = new D1Player(amiga);
-          player.load(stream);
+        packer = new type();
+        output = packer.depack(stream);
 
-          if (player.version) {
-            index = DELTAMUSIC;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 3018) {
-        stream.position = 3014;
-        id = stream.readMultiByte(4, CorePlayer.ENCODING);
-
-        if (id == ".FNL") {
-          player = new D2Player(amiga);
-          player.load(stream);
+        if (packer.format) {
+          player = new ATPlayer(amiga);
+          player.load(output);
 
           if (player.version) {
-            index = DELTAMUSIC;
+            index = 0;
             return player;
           }
-        }
-      }
-
-      if (stream.length > 30) {
-        stream.position = 26;
-        id = stream.readMultiByte(3, CorePlayer.ENCODING);
-
-        if (id == "BPS" || id == "V.2" || id == "V.3") {
-          player = new BPPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = BPSOUNDMON;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 4) {
-        stream.position = 0;
-        id = stream.readMultiByte(4, CorePlayer.ENCODING);
-
-        if (id == "SMOD" || id == "FC14") {
-          player = new FCPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = FUTURECOMP;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 10) {
-        stream.position = 0;
-        id = stream.readMultiByte(9, CorePlayer.ENCODING);
-
-        if (id == " MUGICIAN") {
-          player = new DMPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = DIGITALMUG;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 86) {
-        stream.position = 58;
-        id = stream.readMultiByte(28, CorePlayer.ENCODING);
-
-        if (id == "SIDMON II - THE MIDI VERSION") {
-          player = new S2Player(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = SIDMON;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 2830) {
-        stream.position = 0;
-        value = stream.readUnsignedShort();
-
-        if (value == 0x4efa) {
-          player = new FEPlayer(amiga);
-          player.load(stream);
-
-          if (player.version) {
-            index = FREDED;
-            return player;
-          }
-        }
-      }
-
-      if (stream.length > 5220) {
-        player = new S1Player(amiga);
-        player.load(stream);
-
-        if (player.version) {
-          index = SIDMON;
-          return player;
-        }
-      }
-
-      stream.position = 0;
-      value = stream.readUnsignedShort();
-      stream.position = 0;
-      id = stream.readMultiByte(4, CorePlayer.ENCODING);
-
-      if (id == "COSO" || value == 0x6000 || value == 0x6002 || value == 0x600e || value == 0x6016) {
-        player = new JHPlayer(amiga);
-        player.load(stream);
-
-        if (player.version) {
-          index = HIPPEL;
-          return player;
-        }
-      }
-
-      stream.position = 0;
-      value = stream.readUnsignedShort();
-
-      player = new DWPlayer(amiga);
-      player.load(stream);
-
-      if (player.version) {
-        index = WHITTAKER;
-        return player;
-      }
-
-      stream.position = 0;
-      value = stream.readUnsignedShort();
-
-      if (value == 0x6000) {
-        player = new RHPlayer(amiga);
-        player.load(stream);
-
-        if (player.version) {
-          index = HUBBARD;
-          return player;
-        }
-      }
-
-      if (stream.length > 1625) {
-        player = new STPlayer(amiga);
-        player.load(stream);
-
-        if (player.version) {
-          index = SOUNDTRACKER;
-          return player;
         }
       }
 
       stream.clear();
+      stream = null;
+
       index = 0;
-      return player = null;
+      return null;
     }
 
-    private static const
-      SOUNDTRACKER = 0,
-      NOISETRACKER = 4,
-      PROTRACKER   = 9,
-      HISMASTER    = 12,
-      SOUNDFX      = 13,
-      BPSOUNDMON   = 17,
-      DELTAMUSIC   = 20,
-      DIGITALMUG   = 22,
-      FUTURECOMP   = 24,
-      SIDMON       = 26,
-      WHITTAKER    = 28,
-      FREDED       = 29,
-      HIPPEL       = 30,
-      HUBBARD      = 32,
-      FASTTRACKER  = 33,
+    private function registerAliases():void {
+      registerClassAlias(PLAYERS[0], ATPlayer);
+      registerClassAlias(PLAYERS[1], CTPlayer);
+      registerClassAlias(PLAYERS[2], FXPlayer);
+      registerClassAlias(PLAYERS[3], GMPlayer);
+      registerClassAlias(PLAYERS[4], HMPlayer);
+      registerClassAlias(PLAYERS[5], F2Player);
 
-      TRACKERS = [
+      registerClassAlias(PACKERS[0], DigitalIllusion);
+      registerClassAlias(PACKERS[1], Heatseeker);
+      registerClassAlias(PACKERS[2], ModuleProtector);
+      registerClassAlias(PACKERS[3], NoisePacker2);
+      registerClassAlias(PACKERS[4], NoisePacker3);
+      registerClassAlias(PACKERS[5], PhaPacker);
+      registerClassAlias(PACKERS[6], ProPacker1);
+      registerClassAlias(PACKERS[7], ProPacker2);
+      registerClassAlias(PACKERS[8], ProRunner1);
+      registerClassAlias(PACKERS[9], ProRunner2);
+      registerClassAlias(PACKERS[10], StarTrekkerPacker);
+      registerClassAlias(PACKERS[11], ThePlayer4);
+      registerClassAlias(PACKERS[12], ThePlayer56);
+      registerClassAlias(PACKERS[13], ThePlayer61);
+    }
+
+    private const
+      PLAYERS : Vector.<String> = Vector.<String>([
+        "ATPlayer",
+        "CTPlayer",
+        "FXPlayer",
+        "GMPlayer",
+        "HMPlayer",
+        "F2Player"
+      ]),
+
+      PACKERS : Vector.<String> = Vector.<String>([
+        "DigitalIllusion",
+        "Heatseeker",
+        "ModuleProtector",
+        "NoisePacker2",
+        "NoisePacker3",
+        "PhaPacker",
+        "ProPacker1",
+        "ProPacker2",
+        "ProRunner1",
+        "ProRunner2",
+        "StarTrekkerPacker",
+        "ThePlayer4",
+        "ThePlayer56",
+        "ThePlayer61"
+      ]),
+
+      OFFSETS : Vector.<int> = Vector.<int>([
+        0,16,20,18,19,24
+      ]),
+
+      TRACKERS : Vector.<String> = Vector.<String>([
         "Unknown Format",
-        "Ultimate SoundTracker",
-        "D.O.C. SoundTracker 9",
-        "Master SoundTracker",
-        "D.O.C. SoundTracker 2.0/2.2",
-        "SoundTracker 2.3",
-        "SoundTracker 2.4",
+        "Ultimate Soundtracker",
+        "TJC Soundtracker 2",
+        "DOC Soundtracker 4",
+        "Master Soundtracker",
+        "DOC Soundtracker 9",
+        "DOC Soundtracker 2.0",
+        "Soundtracker 2.3",
         "NoiseTracker 1.0",
         "NoiseTracker 1.1",
-        "NoiseTracker 2.0",
         "ProTracker 1.0",
-        "ProTracker 1.1/2.1",
-        "ProTracker 1.2/2.0",
+        "NoiseTracker 2.0",
+        "StarTrekker",
+        "ProTracker 1.0c",
+        "ProTracker 2.0",
+        "ProTracker 3.0",
+        "FastTracker",
+        "ChipTracker",
+        "Soundtracker 2.6",
+        "Game Music Creator",
         "His Master's NoiseTracker",
-        "SoundFX 1.0/1.7",
+        "SoundFX 1.3",
         "SoundFX 1.8",
         "SoundFX 1.945",
-        "SoundFX 1.994/2.0",
-        "BP SoundMon V1",
-        "BP SoundMon V2",
-        "BP SoundMon V3",
-        "Delta Music 1.0",
-        "Delta Music 2.0",
-        "Digital Mugician",
-        "Digital Mugician 7 Voices",
-        "Future Composer 1.0/1.3",
-        "Future Composer 1.4",
-        "SidMon 1.0",
-        "SidMon 2.0",
-        "David Whittaker",
-        "FredEd",
-        "Jochen Hippel",
-        "Jochen Hippel COSO",
-        "Rob Hubbard",
+        "SoundFX 2.0",
         "FastTracker II",
         "Sk@leTracker",
         "MadTracker 2.0",
         "MilkyTracker",
         "DigiBooster Pro 2.18",
-        "OpenMPT"];
+        "OpenMPT"
+      ]);
   }
 }

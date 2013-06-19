@@ -18,27 +18,43 @@
 package neoart.flod.trackers {
   import neoart.flod.core.*;
 
-  public final class HMVoice {
+  public final class ATVoice {
     internal var
       index        : int,
-      next         : HMVoice,
+      next         : ATVoice,
       channel      : AmigaChannel,
-      sample       : HMSample,
+      sample       : BaseSample,
       enabled      : int,
-      state        : int,
+      loopCtr      : int,
+      loopPos      : int,
+      step         : int,
       period       : int,
+      last         : int,
       effect       : int,
       param        : int,
-      volume1      : int,
-      volume2      : int,
+      volume       : int,
+      slide        : int,
+      pointer      : int,
+      length       : int,
+      loopPtr      : int,
+      repeat       : int,
+      finetune     : int,
+      offset       : int,
       portaDir     : int,
       portaPeriod  : int,
       portaSpeed   : int,
+      glissando    : int,
+      tremoloParam : int,
+      tremoloPos   : int,
+      tremoloWave  : int,
+      vibratoParam : int,
       vibratoPos   : int,
-      vibratoSpeed : int,
-      wavePos      : int;
+      vibratoWave  : int,
+      funkPos      : int,
+      funkSpeed    : int,
+      funkWave     : int;
 
-    public function HMVoice(index:int) {
+    public function ATVoice(index:int) {
       this.index = index;
     }
 
@@ -46,32 +62,34 @@ package neoart.flod.trackers {
       channel      = null;
       sample       = null;
       enabled      = 0;
-      state        = 0;
+      loopCtr      = 0;
+      loopPos      = 0;
+      step         = 0;
       period       = 0;
+      last         = 0;
       effect       = 0;
       param        = 0;
-      volume1      = 0;
-      volume2      = 0;
+      volume       = 0;
+      slide        = 0;
+      pointer      = 0;
+      length       = 0;
+      loopPtr      = 0;
+      repeat       = 0;
+      finetune     = 0;
+      offset       = 0;
       portaDir     = 0;
       portaPeriod  = 0;
       portaSpeed   = 0;
+      glissando    = 0;
+      tremoloParam = 0;
+      tremoloPos   = 0;
+      tremoloWave  = 0;
+      vibratoParam = 0;
       vibratoPos   = 0;
-      vibratoSpeed = 0;
-      wavePos      = 0;
-    }
-
-    internal function handler():void {
-      if (state) {
-        sample.loopPtr = sample.pointer + sample.waves[wavePos];
-
-        volume1 = sample.volumes[wavePos];
-
-        if (++wavePos > sample.waveLen) {
-          wavePos = sample.restart;
-        }
-      }
-
-      channel.volume = (volume1 * volume2) >> 6;
+      vibratoWave  = 0;
+      funkPos      = 0;
+      funkSpeed    = 0;
+      funkWave     = 0;
     }
   }
 }

@@ -1,10 +1,10 @@
 ﻿/*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 4.0 - 2012/03/05
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -26,8 +26,8 @@ package neoart.flod.fasttracker {
       linear        : int;
     private var
       voices        : Vector.<F2Voice>,
-      order         : int,
-      position      : int,
+      currOrder     : int,
+      currPosition  : int,
       nextOrder     : int,
       nextPosition  : int,
       pattern       : F2Pattern,
@@ -35,22 +35,283 @@ package neoart.flod.fasttracker {
       patternOffset : int,
       complete      : int;
 
-    public function F2Player(mixer:Soundblaster = null) {
-      super(mixer);
+    public function F2Player(blaster:SoundBlaster = null) {
+      super(blaster);
+      blaster.process = process;
     }
 
-    override public function process():void {
-      var com:int, curr:F2Point, instr:F2Instrument, i:int, jumpFlag:int, next:F2Point, paramx:int, paramy:int, porta:int, row:F2Row, sample:F2Sample, slide:int, value:int, voice:F2Voice = voices[0];
+    override protected function initialize():void {
+      var i:int = 0, voice:F2Voice;
+      super.initialize();
+
+      timer         = speed;
+      currOrder     =  0;
+      currPosition  =  0;
+      nextOrder     = -1;
+      nextPosition  = -1;
+      patternDelay  =  0;
+      patternOffset =  0;
+      complete      =  0;
+      master        = 64;
+
+      voices = new Vector.<F2Voice>(channels, true);
+
+      for (; i < channels; ++i) {
+        voice = new F2Voice(i);
+
+        voice.channel = blaster.channels[i];
+        voice.playing = instruments[0];
+        voice.sample  = voice.playing.samples[0];
+
+        voices[i] = voice;
+        if (i) voices[int(i - 1)].next = voice;
+      }
+    }
+
+    override protected function loader(stream:ByteArray, extra:ByteArray):void {
+      var header:int, i:int, id:String, iheader:int, instr:F2Instrument, ipos:int, j:int, len:int, pattern:F2Pattern, pos:int, reserved:int = 22, row:F2Row, rows:int, sample:SBSample, value:int;
+
+      if (stream.length < 360) return;
+      stream.position = 17;
+
+      m_title = stream.readUTFBytes(20);
+      stream.position++;
+      id = stream.readUTFBytes(20);
+
+      if (id == "FastTracker v2.00   " || id == "FastTracker v 2.00  ") {
+        m_version = 1;
+      } else if (id == "Sk@le Tracker") {
+        reserved = 2;
+        m_version = 2;
+      } else if (id == "MadTracker 2.0") {
+        m_version = 3;
+      } else if (id == "MilkyTracker        ") {
+        m_version = 4;
+      } else if (id == "DigiBooster Pro 2.18") {
+        m_version = 5;
+      } else if (id.indexOf("OpenMPT") != -1) {
+        m_version = 6;
+      } else {
+        return;
+      }
+
+      stream.readUnsignedShort();
+
+      header = stream.readUnsignedInt();
+      length = stream.readUnsignedShort();
+      restart = stream.readUnsignedShort();
+      m_channels = stream.readUnsignedShort();
+
+      value = rows = stream.readUnsignedShort();
+      instruments = new Vector.<F2Instrument>(stream.readUnsignedShort() + 1, true);
+
+      linear = stream.readUnsignedShort();
+      speed  = stream.readUnsignedShort();
+      tempo  = stream.readUnsignedShort();
+
+      track = new Vector.<int>(length, true);
+
+      for (i = 0; i < length; ++i) {
+        j = stream.readUnsignedByte();
+        track[i] = j;
+
+        if (j >= value) rows = j + 1;
+      }
+
+      patterns = new Vector.<F2Pattern>(rows, true);
+
+      if (rows != value) {
+        pattern = new F2Pattern(64, channels);
+        j = pattern.size;
+
+        for (i = 0; i < j; ++i) pattern.rows[i] = new F2Row();
+        patterns[--rows] = pattern;
+      }
+
+      stream.position = pos = header + 60;
+      len = value;
+
+      for (i = 0; i < len; ++i) {
+        header = stream.readUnsignedInt();
+        stream.position++;
+
+        pattern = new F2Pattern(stream.readUnsignedShort(), channels);
+        rows = pattern.size;
+
+        value = stream.readUnsignedShort();
+        stream.position = pos + header;
+        ipos = stream.position + value;
+
+        if (value) {
+          for (j = 0; j < rows; ++j) {
+            row = new F2Row();
+            value = stream.readUnsignedByte();
+
+            if (value & 128) {
+              if (value &  1) row.note       = stream.readUnsignedByte();
+              if (value &  2) row.instrument = stream.readUnsignedByte();
+              if (value &  4) row.volume     = stream.readUnsignedByte();
+              if (value &  8) row.effect     = stream.readUnsignedByte();
+              if (value & 16) row.param      = stream.readUnsignedByte();
+            } else {
+              row.note       = value;
+              row.instrument = stream.readUnsignedByte();
+              row.volume     = stream.readUnsignedByte();
+              row.effect     = stream.readUnsignedByte();
+              row.param      = stream.readUnsignedByte();
+            }
+
+            if (row.note != KEYOFF_NOTE) {
+              if (row.note > 96) row.note = 0;
+            }
+
+            pattern.rows[j] = row;
+          }
+        } else {
+          for (j = 0; j < rows; ++j) {
+            pattern.rows[j] = new F2Row();
+          }
+        }
+
+        patterns[i] = pattern;
+        pos = stream.position;
+        if (pos != ipos) pos = stream.position = ipos;
+      }
+
+      ipos = stream.position;
+      len = instruments.length;
+
+      for (i = 1; i < len; ++i) {
+        iheader = stream.readUnsignedInt();
+        if ((stream.position + iheader) >= stream.length) break;
+
+        instr = new F2Instrument();
+        instr.name = stream.readUTFBytes(22);
+        stream.position++;
+
+        value = stream.readUnsignedShort();
+        if (value > 16) value = 16;
+        header = stream.readUnsignedInt();
+        if (reserved == 2 && header != 64) header = 64;
+
+        if (value) {
+          instr.samples = new Vector.<SBSample>(value, true);
+
+          for (j = 0; j < 96; ++j) {
+            instr.noteSamples[j] = stream.readUnsignedByte();
+          }
+
+          for (j = 0; j < 12; ++j) {
+            instr.volData.points[j] = new F2Point(stream.readUnsignedShort(), stream.readUnsignedShort());
+          }
+
+          for (j = 0; j < 12; ++j) {
+            instr.panData.points[j] = new F2Point(stream.readUnsignedShort(), stream.readUnsignedShort());
+          }
+
+          instr.volData.total     = stream.readUnsignedByte();
+          instr.panData.total     = stream.readUnsignedByte();
+          instr.volData.sustain   = stream.readUnsignedByte();
+          instr.volData.loopStart = stream.readUnsignedByte();
+          instr.volData.loopEnd   = stream.readUnsignedByte();
+          instr.panData.sustain   = stream.readUnsignedByte();
+          instr.panData.loopStart = stream.readUnsignedByte();
+          instr.panData.loopEnd   = stream.readUnsignedByte();
+          instr.volData.flags     = stream.readUnsignedByte();
+          instr.panData.flags     = stream.readUnsignedByte();
+
+          if (instr.volData.flags & ENVELOPE_ON) instr.volEnabled = 1;
+          if (instr.panData.flags & ENVELOPE_ON) instr.panEnabled = 1;
+
+          instr.vibratoType  = stream.readUnsignedByte();
+          instr.vibratoSweep = stream.readUnsignedByte();
+          instr.vibratoDepth = stream.readUnsignedByte();
+          instr.vibratoSpeed = stream.readUnsignedByte();
+          instr.fadeout      = stream.readUnsignedShort() << 1;
+
+          stream.position += reserved;
+          pos = stream.position;
+          instruments[i] = instr;
+
+          for (j = 0; j < value; ++j) {
+            sample = new SBSample();
+            sample.length    = stream.readUnsignedInt();
+            sample.loopStart = stream.readUnsignedInt();
+            sample.loopLen   = stream.readUnsignedInt();
+            sample.volume    = stream.readUnsignedByte();
+            sample.finetune  = stream.readByte();
+            sample.loopMode  = stream.readUnsignedByte();
+            sample.panning   = stream.readUnsignedByte();
+            sample.relative  = stream.readByte();
+
+            stream.position++;
+            sample.name = stream.readUTFBytes(22);
+            instr.samples[j] = sample;
+
+            stream.position = (pos += header);
+          }
+
+          for (j = 0; j < value; ++j) {
+            sample = instr.samples[j];
+            if (!sample.length) continue;
+            pos = stream.position + sample.length;
+
+            if (sample.loopMode & 16) {
+              sample.bits       = 16;
+              sample.loopMode  ^= 16;
+              sample.length    >>= 1;
+              sample.loopStart >>= 1;
+              sample.loopLen   >>= 1;
+            }
+
+            if (!sample.loopLen) sample.loopMode = 0;
+            sample.write(stream);
+            if (sample.loopMode) sample.length = sample.loopStart + sample.loopLen;
+            stream.position = pos;
+          }
+        } else {
+          stream.position = ipos + iheader;
+        }
+
+        ipos = stream.position;
+        if (ipos >= stream.length) break;
+      }
+
+      instr = new F2Instrument();
+      instr.volData = new F2Data();
+      instr.panData = new F2Data();
+      instr.samples = new Vector.<SBSample>(1, true);
+
+      for (i = 0; i < 12; ++i) {
+        instr.volData.points[i] = new F2Point();
+        instr.panData.points[i] = new F2Point();
+      }
+
+      sample = new SBSample();
+      sample.length = 220;
+      sample.data = new Vector.<Number>(220, true);
+
+      for (i = 0; i < 220; ++i) sample.data[i] = 0.0;
+
+      instr.samples[0] = sample;
+      instruments[0] = instr;
+
+      stream.clear();
+      stream = null;
+    }
+
+    private function process():void {
+      var com:int, curr:F2Point, instr:F2Instrument, i:int, jumpFlag:int, next:F2Point, paramx:int, paramy:int, porta:int, row:F2Row, sample:SBSample, slide:int, value:int, voice:F2Voice = voices[0];
 
       if (!tick) {
-        if (nextOrder >= 0) order = nextOrder;
-        if (nextPosition >= 0) position = nextPosition;
+        if (nextOrder >= 0) currOrder = nextOrder;
+        if (nextPosition >= 0) currPosition = nextPosition;
 
         nextOrder = nextPosition = -1;
-        pattern = patterns[track[order]];
+        pattern = patterns[track[currOrder]];
 
-        while (voice) {
-          row = pattern.rows[int(position + voice.index)];
+        do {
+          row = pattern.rows[int(currPosition + voice.index)];
           com = row.volume >> 4;
           porta = int(row.effect == FX_TONE_PORTAMENTO || row.effect == FX_TONE_PORTA_VOLUME_SLIDE || com == VX_TONE_PORTAMENTO);
           paramx = row.param >> 4;
@@ -66,7 +327,10 @@ package neoart.flod.fasttracker {
             voice.volEnvelope.reset();
             voice.panEnvelope.reset();
             voice.flags |= (UPDATE_VOLUME | UPDATE_PANNING | SHORT_RAMP);
-          } else if (row.note == KEYOFF_NOTE || (row.effect == FX_KEYOFF && !row.param)) {
+            voice.volume = 64;
+          }
+
+          if (row.note == KEYOFF_NOTE || (row.effect == FX_KEYOFF && !row.param)) {
             voice.fadeEnabled = 1;
             voice.keyoff = 1;
           }
@@ -99,8 +363,9 @@ package neoart.flod.fasttracker {
                   voice.finetune = (sample.finetune >> 3) << 2;
                 }
 
-                if (row.effect == FX_EXTENDED_EFFECTS && paramx == EX_SET_FINETUNE)
+                if (row.effect == FX_EXTENDED_EFFECTS && paramx == EX_SET_FINETUNE) {
                   voice.finetune = ((row.param & 15) - 8) << 3;
+                }
 
                 if (linear) {
                   value = ((120 - value) << 6) - voice.finetune;
@@ -209,8 +474,11 @@ package neoart.flod.fasttracker {
               case FX_POSITION_JUMP:
                 nextOrder = row.param;
 
-                if (nextOrder >= length) complete = 1;
-                  else nextPosition = 0;
+                if (nextOrder >= length) {
+                  complete = 1;
+                } else {
+                  nextPosition = 0;
+                }
 
                 jumpFlag      = 1;
                 patternOffset = 0;
@@ -224,7 +492,7 @@ package neoart.flod.fasttracker {
                 patternOffset = 0;
 
                 if (!jumpFlag) {
-                  nextOrder = order + 1;
+                  nextOrder = currOrder + 1;
 
                   if (nextOrder >= length) {
                     complete = 1;
@@ -253,7 +521,7 @@ package neoart.flod.fasttracker {
                     break;
                   case EX_PATTERN_LOOP:
                     if (!paramy) {
-                      voice.patternLoopRow = patternOffset = position;
+                      voice.patternLoopRow = patternOffset = currPosition;
                     } else {
                       if (!voice.patternLoop) {
                         voice.patternLoop = paramy;
@@ -261,8 +529,7 @@ package neoart.flod.fasttracker {
                         voice.patternLoop--;
                       }
 
-                      if (voice.patternLoop)
-                        nextPosition = voice.patternLoopRow;
+                      if (voice.patternLoop) nextPosition = voice.patternLoopRow;
                     }
                     break;
                   case EX_TREMOLO_CONTROL:
@@ -307,8 +574,9 @@ package neoart.flod.fasttracker {
                 value  = row.param;
                 paramx = instr.volData.total;
 
-                for (i = 0; i < paramx; ++i)
+                for (i = 0; i < paramx; ++i) {
                   if (value < instr.volData.points[i].frame) break;
+                }
 
                 voice.volEnvelope.position = --i;
                 paramx--;
@@ -367,18 +635,16 @@ package neoart.flod.fasttracker {
                 break;
             }
           }
-          voice = voice.next;
-        }
+        } while (voice = voice.next);
       } else {
-        while (voice) {
-          row = pattern.rows[int(position + voice.index)];
+        do {
+          row = pattern.rows[int(currPosition + voice.index)];
 
           if (voice.delay) {
             if ((row.param & 15) == tick) {
               voice.flags = voice.delay;
               voice.delay = 0;
             } else {
-              voice = voice.next;
               continue;
             }
           }
@@ -558,20 +824,26 @@ package neoart.flod.fasttracker {
               voice.flags |= UPDATE_VOLUME;
             }
           }
-          voice = voice.next;
-        }
+        } while (voice = voice.next);
       }
 
       if (++tick >= (timer + patternDelay)) {
-        patternDelay = tick = 0;
+        tick = 0;
+        patternDelay = 0;
 
         if (nextPosition < 0) {
-          nextPosition = position + channels;
+          nextPosition = currPosition + channels;
 
           if (nextPosition >= pattern.size || complete) {
-            nextOrder = order + 1;
+            nextOrder = currOrder + 1;
             nextPosition = patternOffset;
-
+/* experimental code */
+            if (trackDone[nextOrder] == patternOffset) {
+              mixer.complete = 1;
+            } else {
+              trackDone[nextOrder] = patternOffset;
+            }
+/* end experimental code */
             if (nextOrder >= length) {
               nextOrder = restart;
               mixer.complete = 1;
@@ -579,12 +851,14 @@ package neoart.flod.fasttracker {
           }
         }
       }
+
+      m_position += blaster.samplesTick;
     }
 
     override public function fast():void {
       var chan:SBChannel, delta:int, flags:int, instr:F2Instrument, panning:int, voice:F2Voice = voices[0], volume:Number;
 
-      while (voice) {
+      do {
         chan  = voice.channel;
         flags = voice.flags;
         voice.flags = 0;
@@ -638,19 +912,26 @@ package neoart.flod.fasttracker {
         panning = voice.panning;
 
         if (instr.panEnabled) {
-          if (voice.panEnabled && !voice.panEnvelope.stopped)
+          if (voice.panEnabled && !voice.panEnvelope.stopped) {
             envelope(voice, voice.panEnvelope, instr.panData);
+          }
 
           panning = (voice.panEnvelope.value << 2);
           flags |= UPDATE_PANNING;
 
-          if (panning < 0) panning = 0;
-            else if (panning > 255) panning = 255;
+          if (panning < 0) {
+            panning = 0;
+          } else if (panning > 255) {
+            panning = 255;
+          }
         }
 
         if (flags & UPDATE_VOLUME) {
-          if (volume < 0) volume = 0;
-            else if (volume > 64) volume = 64;
+          if (volume < 0) {
+            volume = 0;
+          } else if (volume > 64) {
+            volume = 64;
+          }
 
           chan.volume = VOLUMES[int((volume * master) >> 6)];
           chan.lvol = chan.volume * chan.lpan;
@@ -678,14 +959,13 @@ package neoart.flod.fasttracker {
           chan.delta  = int(chan.speed);
           chan.speed -= chan.delta;
         }
-        voice = voice.next;
-      }
+      } while (voice = voice.next);
     }
 
     override public function accurate():void {
-      var chan:SBChannel, delta:int, flags:int, instr:F2Instrument, lpan:Number, lvol:Number, panning:int, rpan:Number, rvol:Number, voice:F2Voice = voices[0], volume:Number; 
+      var chan:SBChannel, delta:int, flags:int, instr:F2Instrument, lpan:Number, lvol:Number, panning:int, rpan:Number, rvol:Number, voice:F2Voice = voices[0], volume:Number;
 
-      while (voice) {
+      do {
         chan  = voice.channel;
         flags = voice.flags;
         voice.flags = 0;
@@ -729,8 +1009,9 @@ package neoart.flod.fasttracker {
         volume = voice.volume + voice.volDelta;
 
         if (instr.volEnabled) {
-          if (voice.volEnabled && !voice.volEnvelope.stopped)
+          if (voice.volEnabled && !voice.volEnvelope.stopped) {
             envelope(voice, voice.volEnvelope, instr.volData);
+          }
 
           volume = (volume * voice.volEnvelope.value) >> 6;
           flags |= UPDATE_VOLUME;
@@ -759,26 +1040,32 @@ package neoart.flod.fasttracker {
         panning = voice.panning;
 
         if (instr.panEnabled) {
-          if (voice.panEnabled && !voice.panEnvelope.stopped)
+          if (voice.panEnabled && !voice.panEnvelope.stopped) {
             envelope(voice, voice.panEnvelope, instr.panData);
+          }
 
           panning = (voice.panEnvelope.value << 2);
           flags |= UPDATE_PANNING;
 
-          if (panning < 0) panning = 0;
-            else if (panning > 255) panning = 255;
+          if (panning < 0) {
+            panning = 0;
+          } else if (panning > 255) {
+            panning = 255;
+          }
         }
 
         if (!chan.enabled) {
           chan.volCounter = 0;
           chan.panCounter = 0;
-          voice = voice.next;
           continue;
         }
 
         if (flags & UPDATE_VOLUME) {
-          if (volume < 0) volume = 0;
-            else if (volume > 64) volume = 64;
+          if (volume < 0) {
+            volume = 0;
+          } else if (volume > 64) {
+            volume = 64;
+          }
 
           volume = VOLUMES[int((volume * master) >> 6)];
           lvol = volume * PANNING[int(256 - panning)];
@@ -793,6 +1080,7 @@ package neoart.flod.fasttracker {
             chan.lvol = lvol;
             chan.rvol = rvol;
           }
+
           chan.volume = volume;
         }
 
@@ -809,6 +1097,7 @@ package neoart.flod.fasttracker {
             chan.lpan = lpan;
             chan.rpan = rpan;
           }
+
           chan.panning = panning;
         }
 
@@ -828,250 +1117,7 @@ package neoart.flod.fasttracker {
           chan.rmixRampU  = 0.0;
           chan.rmixDeltaU = chan.rvol / 220;
         }
-        voice = voice.next;
-      }
-    }
-
-    override protected function initialize():void {
-      var i:int = 0, voice:F2Voice;
-      super.initialize();
-
-      timer         = speed;
-      order         =  0;
-      position      =  0;
-      nextOrder     = -1;
-      nextPosition  = -1;
-      patternDelay  =  0;
-      patternOffset =  0;
-      complete      =  0;
-      master        = 64;
-
-      voices = new Vector.<F2Voice>(channels, true);
-
-      for (; i < channels; ++i) {
-        voice = new F2Voice(i);
-
-        voice.channel = mixer.channels[i];
-        voice.playing = instruments[0];
-        voice.sample  = voice.playing.samples[0];
-
-        voices[i] = voice;
-        if (i) voices[int(i - 1)].next = voice;
-      }
-    }
-
-    override protected function loader(stream:ByteArray):void {
-      var header:int, i:int, id:String, iheader:int, instr:F2Instrument, ipos:int, j:int, len:int, pattern:F2Pattern, pos:int, reserved:int = 22, row:F2Row, rows:int, sample:F2Sample, value:int;
-      if (stream.length < 360) return;
-      stream.position = 17;
-
-      title = stream.readMultiByte(20, ENCODING);
-      stream.position++;
-      id = stream.readMultiByte(20, ENCODING);
-
-      if (id == "FastTracker v2.00   " || id == "FastTracker v 2.00  ") {
-        this.version = 1;
-      } else if (id == "Sk@le Tracker") {
-        reserved = 2;
-        this.version = 2;
-      } else if (id == "MadTracker 2.0") {
-        this.version = 3;
-      } else if (id == "MilkyTracker        ") {
-        this.version = 4;
-      } else if (id == "DigiBooster Pro 2.18") {
-        this.version = 5;
-      } else if (id.indexOf("OpenMPT") != -1) {
-        this.version = 6;
-      } else return;
-
-      stream.readUnsignedShort();
-
-      header   = stream.readUnsignedInt();
-      length   = stream.readUnsignedShort();
-      restart  = stream.readUnsignedShort();
-      channels = stream.readUnsignedShort();
-
-      value = rows = stream.readUnsignedShort();
-      instruments = new Vector.<F2Instrument>(stream.readUnsignedShort() + 1, true);
-
-      linear = stream.readUnsignedShort();
-      speed  = stream.readUnsignedShort();
-      tempo  = stream.readUnsignedShort();
-
-      track = new Vector.<int>(length, true);
-
-      for (i = 0; i < length; ++i) {
-        j = stream.readUnsignedByte();
-        if (j >= value) rows = j + 1;
-        track[i] = j;
-      }
-
-      patterns = new Vector.<F2Pattern>(rows, true);
-
-      if (rows != value) {
-        pattern = new F2Pattern(64, channels);
-        j = pattern.size;
-        for (i = 0; i < j; ++i) pattern.rows[i] = new F2Row();
-        patterns[--rows] = pattern;
-      }
-
-      stream.position = pos = header + 60;
-      len = value;
-
-      for (i = 0; i < len; ++i) {
-        header = stream.readUnsignedInt();
-        stream.position++;
-
-        pattern = new F2Pattern(stream.readUnsignedShort(), channels);
-        rows = pattern.size;
-
-        value = stream.readUnsignedShort();
-        stream.position = pos + header;
-        ipos = stream.position + value;
-
-        if (value) {
-          for (j = 0; j < rows; ++j) {
-            row = new F2Row();
-            value = stream.readUnsignedByte();
-
-            if (value & 128) {
-              if (value &  1) row.note       = stream.readUnsignedByte();
-              if (value &  2) row.instrument = stream.readUnsignedByte();
-              if (value &  4) row.volume     = stream.readUnsignedByte();
-              if (value &  8) row.effect     = stream.readUnsignedByte();
-              if (value & 16) row.param      = stream.readUnsignedByte();
-            } else {
-              row.note       = value;
-              row.instrument = stream.readUnsignedByte();
-              row.volume     = stream.readUnsignedByte();
-              row.effect     = stream.readUnsignedByte();
-              row.param      = stream.readUnsignedByte();
-            }
-
-            if (row.note != KEYOFF_NOTE) if (row.note > 96) row.note = 0;
-            pattern.rows[j] = row;
-          }
-        } else {
-          for (j = 0; j < rows; ++j) pattern.rows[j] = new F2Row();
-        }
-
-        patterns[i] = pattern;
-        pos = stream.position;
-        if (pos != ipos) pos = stream.position = ipos;
-      }
-
-      ipos = stream.position;
-      len = instruments.length;
-
-      for (i = 1; i < len; ++i) {
-        iheader = stream.readUnsignedInt();
-        if ((stream.position + iheader) >= stream.length) break;
-
-        instr = new F2Instrument();
-        instr.name = stream.readMultiByte(22, ENCODING);
-        stream.position++;
-
-        value = stream.readUnsignedShort();
-        if (value > 16) value = 16;
-        header = stream.readUnsignedInt();
-        if (reserved == 2 && header != 64) header = 64;
-
-        if (value) {
-          instr.samples = new Vector.<F2Sample>(value, true);
-
-          for (j = 0; j < 96; ++j)
-            instr.noteSamples[j] = stream.readUnsignedByte();
-          for (j = 0; j < 12; ++j)
-            instr.volData.points[j] = new F2Point(stream.readUnsignedShort(), stream.readUnsignedShort());
-          for (j = 0; j < 12; ++j)
-            instr.panData.points[j] = new F2Point(stream.readUnsignedShort(), stream.readUnsignedShort());
-
-          instr.volData.total     = stream.readUnsignedByte();
-          instr.panData.total     = stream.readUnsignedByte();
-          instr.volData.sustain   = stream.readUnsignedByte();
-          instr.volData.loopStart = stream.readUnsignedByte();
-          instr.volData.loopEnd   = stream.readUnsignedByte();
-          instr.panData.sustain   = stream.readUnsignedByte();
-          instr.panData.loopStart = stream.readUnsignedByte();
-          instr.panData.loopEnd   = stream.readUnsignedByte();
-          instr.volData.flags     = stream.readUnsignedByte();
-          instr.panData.flags     = stream.readUnsignedByte();
-
-          if (instr.volData.flags & ENVELOPE_ON) instr.volEnabled = 1;
-          if (instr.panData.flags & ENVELOPE_ON) instr.panEnabled = 1;
-
-          instr.vibratoType  = stream.readUnsignedByte();
-          instr.vibratoSweep = stream.readUnsignedByte();
-          instr.vibratoDepth = stream.readUnsignedByte();
-          instr.vibratoSpeed = stream.readUnsignedByte();
-          instr.fadeout      = stream.readUnsignedShort() << 1;
-
-          stream.position += reserved;
-          pos = stream.position;
-          instruments[i] = instr;
-
-          for (j = 0; j < value; ++j) {
-            sample = new F2Sample();
-            sample.length    = stream.readUnsignedInt();
-            sample.loopStart = stream.readUnsignedInt();
-            sample.loopLen   = stream.readUnsignedInt();
-            sample.volume    = stream.readUnsignedByte();
-            sample.finetune  = stream.readByte();
-            sample.loopMode  = stream.readUnsignedByte();
-            sample.panning   = stream.readUnsignedByte();
-            sample.relative  = stream.readByte();
-
-            stream.position++;
-            sample.name = stream.readMultiByte(22, ENCODING);
-            instr.samples[j] = sample;
-
-            stream.position = (pos += header);
-          }
-
-          for (j = 0; j < value; ++j) {
-            sample = instr.samples[j];
-            if (!sample.length) continue;
-            pos = stream.position + sample.length;
-
-            if (sample.loopMode & 16) {
-              sample.bits       = 16;
-              sample.loopMode  ^= 16;
-              sample.length    >>= 1;
-              sample.loopStart >>= 1;
-              sample.loopLen   >>= 1;
-            }
-
-            if (!sample.loopLen) sample.loopMode = 0;
-            sample.store(stream);
-            if (sample.loopMode) sample.length = sample.loopStart + sample.loopLen;
-            stream.position = pos;
-          }
-        } else {
-          stream.position = ipos + iheader;
-        }
-
-        ipos = stream.position;
-        if (ipos >= stream.length) break;
-      }
-
-      instr = new F2Instrument();
-      instr.volData = new F2Data();
-      instr.panData = new F2Data();
-      instr.samples = new Vector.<F2Sample>(1, true);
-
-      for (i = 0; i < 12; ++i) {
-        instr.volData.points[i] = new F2Point();
-        instr.panData.points[i] = new F2Point();
-      }
-
-      sample = new F2Sample();
-      sample.length = 220;
-      sample.data = new Vector.<Number>(220, true);
-
-      for (i = 0; i < 220; ++i) sample.data[i] = 0.0;
-
-      instr.samples[0] = sample;
-      instruments[0] = instr;
+      } while (voice = voice.next);
     }
 
     private function envelope(voice:F2Voice, envelope:F2Envelope, data:F2Data):void {
@@ -1119,7 +1165,7 @@ package neoart.flod.fasttracker {
 
       return int(period - (delta * finetune));
     }
-    
+
     private function retrig(voice:F2Voice):void {
       switch (voice.retrigx) {
         case 1:

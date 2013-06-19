@@ -1,10 +1,10 @@
 /*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 3.0 - 2012/02/08
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -19,8 +19,8 @@ package neoart.flod.core {
 
   public final class Sample {
     public var
+      next : Sample,
       l    : Number = 0.0,
-      r    : Number = 0.0,
-      next : Sample;
+      r    : Number = 0.0;
   }
 }

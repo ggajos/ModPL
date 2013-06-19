@@ -5,10 +5,12 @@ import flash.net.URLRequest
 import flash.net.navigateToURL
 import flash.system.Security
 import flash.utils.ByteArray;
+import flash.utils.Timer;
 
 import neoart.flip.ZipFile
 
 import neoart.flod.FileLoader
+import neoart.flod.core.AmigaPlayer;
 import neoart.flod.core.CorePlayer
 
 private var
@@ -19,11 +21,13 @@ private var
         paused : Boolean = false,
         definedHeader: String = "N/A",
         definedContent: String = "N/A",
-        volume : Number
+        volume : Number,
+        secondsTimer : Timer = new Timer(1000)
 
 private function init() {
     uiPaused()
     uiEmpty()
+    uiProgressTracker()
     initExternalInterface()
 }
 
@@ -36,8 +40,12 @@ private function completeHandler(e:Event):void {
     urlLoader.removeEventListener(Event.COMPLETE, completeHandler)
     try {
         player = loader.load(urlLoader.data)
-        player.stereo = 0
+        player.stereoSeparation = 0
+        player.filterMode = AmigaPlayer.FORCE_OFF
+        player.loop = true
         player.play()
+        definedHeader = player.title
+        definedContent = loader.tracker
         viewUpdateVolume()
         uiPlaying()
     } catch(ex: Error) {
@@ -166,4 +174,27 @@ private function uiPleaseWait() {
 private function uiTextDefined() {
     txtHeader.text = definedHeader
     txtContent.text = definedContent
+}
+
+private function uiProgressTracker() {
+    secondsTimer.start()
+    secondsTimer.addEventListener(TimerEvent.TIMER, function() {
+        if(player != null) {
+            var current = player.position * 100.0 / player.duration
+            progressSlider.value = current
+            txtTime.text = convertToMMSS(current) + " / " + convertToMMSS(player.duration / 1000)
+        }
+    })
+}
+
+// Utils
+
+function convertToMMSS(seconds:Number): String {
+    var s: Number = seconds % 60;
+    var m: Number = Math.floor((seconds % 3600 ) / 60);
+    return doubleDigitFormat(m) + ":" + doubleDigitFormat(s);
+}
+
+function doubleDigitFormat(n :uint): String {
+    return (n < 10) ? ("0" + n) : String(n);
 }

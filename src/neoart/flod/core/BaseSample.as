@@ -15,14 +15,16 @@
   To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to
   Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
 */
-package neoart.flod.trackers {
-  import neoart.flod.core.*;
+package neoart.flod.core {
 
-  public final class HMSample extends BaseSample {
-    internal var
-      restart : int,
-      waveLen : int,
-      waves   : Vector.<int>,
-      volumes : Vector.<int>;
+  public class BaseSample {
+    public var
+      name     : String = "",
+      pointer  : int,
+      length   : int,
+      loopPtr  : int,
+      repeat   : int,
+      volume   : int,
+      finetune : int;
   }
 }

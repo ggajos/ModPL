@@ -1,10 +1,10 @@
 ﻿/*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 3.0 - 2012/02/08
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -38,7 +38,7 @@ package neoart.flod.fasttracker {
       autoVibratoPos : int,
       autoSweep      : int,
       autoSweepPos   : int,
-      sample         : F2Sample,
+      sample         : SBSample,
       sampleOffset   : int,
       volume         : int,
       volEnabled     : int,
@@ -93,7 +93,7 @@ package neoart.flod.fasttracker {
       keyoff   = 0;
       volDelta = 0;
 
-      fadeEnabled = 0;      
+      fadeEnabled = 0;
       fadeDelta   = 0;
       fadeVolume  = 65536;
 
@@ -154,8 +154,11 @@ package neoart.flod.fasttracker {
       if (period < portaPeriod) {
         glissPeriod += portaSpeed << 2;
 
-        if (!glissando) period = glissPeriod;
-          else period = Math.round(glissPeriod / 64) << 6;
+        if (!glissando) {
+          period = glissPeriod;
+        } else {
+          period = Math.round(glissPeriod / 64) << 6;
+        }
 
         if (period >= portaPeriod) {
           period = portaPeriod;
@@ -164,8 +167,11 @@ package neoart.flod.fasttracker {
       } else if (period > portaPeriod) {
         glissPeriod -= portaSpeed << 2;
 
-        if (!glissando) period = glissPeriod;
-          else period = Math.round(glissPeriod / 64) << 6;
+        if (!glissando) {
+          period = glissPeriod;
+        } else {
+          period = Math.round(glissPeriod / 64) << 6;
+        }
 
         if (period <= portaPeriod) {
           period = portaPeriod;

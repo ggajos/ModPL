@@ -1,10 +1,10 @@
 /*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 4.1 - 2012/04/09
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -20,73 +20,73 @@ package neoart.flod.core {
   public final class AmigaChannel {
     public var
       next    : AmigaChannel,
+      master  : Number = 1.0,
       mute    : int,
       panning : Number = 1.0,
       delay   : int,
       pointer : int,
       length  : int;
     internal var
-      audena  : int,
-      audcnt  : int,
-      audloc  : int,
-      audper  : int,
-      audvol  : int,
-      timer   : Number,
-      level   : Number,
-      ldata   : Number,
-      rdata   : Number;
+      timer  : Number,
+      level  : Number,
+      audena : int,
+      audloc : int,
+      audlen : int,
+      audper : int,
+      audvol : int,
+      audatl : Number,
+      audatr : Number;
 
     public function AmigaChannel(index:int) {
       if ((++index & 2) == 0) panning = -panning;
       level = panning;
     }
 
-    public function get enabled():int { return audena; }
-
     public function set enabled(value:int):void {
       if (value == audena) return;
 
       audena = value;
       audloc = pointer;
-      audcnt = pointer + length;
+      audlen = pointer + length;
 
       timer = 1.0;
       if (value) delay += 2;
     }
 
     public function set period(value:int):void {
-      if (value < 0) value = 0;
-        else if(value > 65535) value = 65535;
+      if (value < 0 || value > 65535) value = 0;
 
       audper = value;
     }
 
     public function set volume(value:int):void {
-      if (value < 0) value = 0;
-        else if (value > 64) value = 64;
+      if (value < 0) {
+        value = 0;
+      } else if (value > 64) {
+        value = 64;
+      }
 
-      audvol = value;
+      audvol = int(value * master);
     }
 
-    public function resetData():void {
-      ldata = 0.0;
-      rdata = 0.0;
+    public function reset():void {
+      audatl = 0.0;
+      audatr = 0.0;
     }
 
     internal function initialize():void {
-      audena = 0;
-      audcnt = 0;
-      audloc = 0;
-      audper = 50;
-      audvol = 0;
-
-      timer = 0.0;
-      ldata = 0.0;
-      rdata = 0.0;
-
       delay   = 0;
       pointer = 0;
       length  = 0;
+      timer   = 0.0;
+
+      audena = 0;
+      audloc = 0;
+      audlen = 0;
+      audper = 0;
+      audvol = 0;
+      audatl = 0.0;
+      audatr = 0.0;
     }
   }
 }

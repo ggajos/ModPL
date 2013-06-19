@@ -18,7 +18,7 @@ package neoart.flip {
 
   public final class ZipFile {
     public static const
-      ENDIAN  : String = "littleEndian";
+      ENDIAN : String = "littleEndian";
     public var
       entries : Vector.<ZipEntry>;
     private var

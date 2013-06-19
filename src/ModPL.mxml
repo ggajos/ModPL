@@ -67,11 +67,37 @@
              textAlign="center"
              text="N/A" />
 
-    <mx:HSlider id="volumeSlider"
+    <mx:Text id="txtTime"
+             x="100" y="45"
+             width="300"
+             textAlign="right"
+             text="0:00 / 0:00" />
+
+    <mx:HSlider id="progressSlider"
                 x="100" y="55"
                 width="300"
                 minimum="0" maximum="100"
                 value="100"
+                dataTipPrecision="0"
+                dataTipStyleName="hTip"
+                invertThumbDirection="true"
+                showTrackHighlight="false"
+                liveDragging="false"
+                enabled="false"/>
+
+    <mx:Text id="txtVolume"
+             x="100" y="47"
+             width="100"
+             fontSize="9"
+             textAlign="right"
+             color="#aaaaaa"
+             text="vol"/>
+
+    <mx:HSlider id="volumeSlider"
+                x="200" y="41"
+                width="100"
+                minimum="0" maximum="100"
+                value="80"
                 dataTipPrecision="0"
                 dataTipStyleName="hTip"
                 invertThumbDirection="true"
@@ -85,8 +111,7 @@
              fontSize="9"
              textAlign="center"
              width="300"
-             color="#aaaaaa"
-            />
+             color="#aaaaaa"/>
 
     <mx:Zoom
             id="effOver"

@@ -1,10 +1,10 @@
 /*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 4.1 - 2012/04/21
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -19,41 +19,85 @@ package neoart.flod.core {
 
   public class SBPlayer extends CorePlayer {
     public var
-      mixer   : Soundblaster,
+      blaster : SoundBlaster,
+      track   : Vector.<int>,
       length  : int,
-      restart : int,
-      track   : Vector.<int>;
+      restart : int;
     protected var
-      timer   : int,
-      master  : int;
+      master  : int,
+      timer   : int;
 
-    public function SBPlayer(mixer:Soundblaster = null) {
-      this.mixer = mixer || new Soundblaster();
-      super(this.mixer);
+    public function SBPlayer(mixer:SoundBlaster = null) {
+      blaster = mixer || new SoundBlaster();
+      super(blaster);
 
       endian  = "littleEndian";
-      quality = 1;
-  }
+      quality = true;
+    }
 
     override public function set volume(value:Number):void {
-      if (value < 0.0) value = 0.0;
-        else if (value > 1.0) value = 1.0;
+      if (value < 0.0) {
+        value = 0.0;
+      } else if (value > 1.0) {
+        value = 1.0;
+      }
 
       master = value * 64;
     }
 
-    override public function toggle(index:int):void {
-      mixer.channels[index].mute ^= 1;
+    override public function mute(index:int = -1):void {
+      var i:int;
+
+      if (index >= 0 && index < m_channels) {
+        blaster.channels[index].mute ^= 1;
+        flags ^= (1 << index);
+      } else {
+        m_mute ^= 1;
+
+        for (i = 0; i < m_channels; ++i) {
+          blaster.channels[i].mute = m_mute | (flags & (1 << i));
+        }
+      }
     }
 
-    override protected function setup():void {
-      mixer.setup(channels);
+    override public function seek(position:int):int {
+      var current:int = m_position;
+
+      stop();
+      position *= 44100;
+
+      if (position < current) {
+        initialize();
+      } else {
+        m_position = current;
+      }
+
+      do {
+        blaster.process();
+      } while (position > m_position);
+
+      play();
+      return m_position;
+    }
+
+    override protected function calc():void {
+      var store:Boolean = loop;
+      initialize();
+
+      do {
+        blaster.process();
+      } while (!blaster.complete);
+
+      m_duration = m_position / 44.1;
+      m_position = 0;
+      loop = store;
     }
 
     override protected function initialize():void {
       super.initialize();
-      timer  = speed;
       master = 64;
+      timer  = speed;
+      mixer.samplesTick = 110250 / tempo;
     }
   }
 }

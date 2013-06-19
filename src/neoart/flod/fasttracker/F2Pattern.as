@@ -1,10 +1,10 @@
-/*
-  Flod 4.1
-  2012/04/30
+﻿/*
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 3.0 - 2012/02/08
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -23,7 +23,7 @@ package neoart.flod.fasttracker {
       length : int,
       size   : int;
 
-    public function F2Pattern(length, channels) {
+    public function F2Pattern(length:int, channels:int) {
       size = length * channels;
       rows = new Vector.<F2Row>(size, true);
       this.length = length;

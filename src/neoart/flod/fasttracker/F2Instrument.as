@@ -1,10 +1,10 @@
-/*
-  Flod 4.1
-  2012/04/30
+﻿/*
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 3.0 - 2012/02/08
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -16,11 +16,12 @@
   Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
 */
 package neoart.flod.fasttracker {
+  import neoart.flod.core.*;
 
   public final class F2Instrument {
     internal var
       name         : String = "",
-      samples      : Vector.<F2Sample>,
+      samples      : Vector.<SBSample>,
       noteSamples  : Vector.<int>,
       fadeout      : int,
       volData      : F2Data,

@@ -1,10 +1,10 @@
 /*
-  Flod 4.1
-  2012/04/30
+  Flod 5.0
+  2013/08/15
   Christian Corti
   Neoart Costa Rica
 
-  Last Update: Flod 3.0 - 2012/02/08
+  Last Update: Flod 5.0 - 2013/08/15
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
@@ -22,6 +22,9 @@ package neoart.flod.core {
     public var
       name      : String = "",
       bits      : int = 8,
+      relative  : int,
+      finetune  : int,
+      panning   : int,
       volume    : int,
       length    : int,
       data      : Vector.<Number>,
@@ -29,29 +32,30 @@ package neoart.flod.core {
       loopStart : int,
       loopLen   : int;
 
-    public function store(stream:ByteArray):void {
-      var delta:int, i:int, len:int = length, pos:int, sample:Number, total:int, value:int;
-      if (!loopLen) loopMode = 0;
-      pos = stream.position;
+    public function write(stream:ByteArray):void {
+      var delta:int, i:int, len:int = length, pos:int = stream.position, sample:Number, total:int, value:int;
 
-      if (loopMode) {
-        len = loopStart + loopLen;
-        data = new Vector.<Number>(len + 1, true);
-      } else {
-        data = new Vector.<Number>(length + 1, true);
-      }
+      if (!loopLen) loopMode = 0;
+
+      if (loopMode) len = loopStart + loopLen;
+
+      data = new Vector.<Number>(len + 1, true);
 
       if (bits == 8) {
         total = pos + len;
 
-        if (total > stream.length)
+        if (total > stream.length) {
           len = stream.length - pos;
+        }
 
         for (i = 0; i < len; ++i) {
           value = stream.readByte() + delta;
 
-          if (value < -128) value += 256;
-            else if (value > 127) value -= 256;
+          if (value < -128) {
+            value += 256;
+          } else if (value > 127) {
+            value -= 256;
+          }
 
           data[i] = value * 0.0078125;
           delta = value;
@@ -59,14 +63,18 @@ package neoart.flod.core {
       } else {
         total = pos + (len << 1);
 
-        if (total > stream.length)
+        if (total > stream.length) {
           len = (stream.length - pos) >> 1;
+        }
 
         for (i = 0; i < len; ++i) {
           value = stream.readShort() + delta;
 
-          if (value < -32768) value += 65536;
-            else if (value > 32767) value -= 65536;
+          if (value < -32768) {
+            value += 65536;
+          } else if (value > 32767) {
+            value -= 65536;
+          }
 
           data[i] = value * 0.00003051758;
           delta = value;
@@ -75,9 +83,7 @@ package neoart.flod.core {
 
       total = pos + length;
 
-      if (!loopMode) {
-        data[length] = 0.0;
-      } else {
+      if (loopMode) {
         length = loopStart + loopLen;
 
         if (loopMode == 1) {
@@ -85,15 +91,23 @@ package neoart.flod.core {
         } else {
           data[len] = data[int(len - 1)];
         }
+      } else {
+        data[length] = 0.0;
       }
 
       if (len != length) {
         sample = data[int(len - 1)];
-        for (i = len; i < length; ++i) data[i] = sample;
+
+        for (i = len; i < length; ++i) {
+          data[i] = sample;
+        }
       }
 
-      if (total < stream.length) stream.position = total;
-        else stream.position = stream.length - 1;
+      if (total < stream.length) {
+        stream.position = total;
+      } else {
+        stream.position = stream.length - 1;
+      }
     }
   }
 }
