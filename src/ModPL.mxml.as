@@ -178,10 +178,11 @@ private function uiProgressTracker() {
     secondsTimer.start()
     secondsTimer.addEventListener(TimerEvent.TIMER, function() {
         if(player != null) {
-            var current = player.position * 200.0 / player.duration
-            current = current % (player.duration / 2000)
-            progressSlider.value = current
-            txtTime.text = convertToMMSS(current) + " / " + convertToMMSS(player.duration / 2000)
+            var currentMs = player.position / 1000.0
+            var durationMs = player.duration / 1000.0
+            currentMs = currentMs % durationMs
+            progressSlider.value = currentMs * 100.0 / durationMs
+            txtTime.text = convertToMMSS(currentMs) + " / " + convertToMMSS(durationMs)
         }
     })
 }
