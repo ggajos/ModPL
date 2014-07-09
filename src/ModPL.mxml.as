@@ -1,4 +1,5 @@
-import com.opentangerine.ModulesPlayer;
+import com.opentangerine.IModulesPlayer;
+import com.opentangerine.ModulesPlayerFactory;
 
 import flash.events.Event;
 import flash.events.ProgressEvent;
@@ -12,7 +13,7 @@ import flash.system.Security;
 import flash.utils.Timer;
 
 private var
-        modPlay : ModulesPlayer,
+        modPlay : IModulesPlayer = new ModulesPlayerFactory().initial(),
         urlLoader : URLLoader,
         modUrl : String,
         paused : Boolean = false,
@@ -28,14 +29,14 @@ private function init() {
 }
 
 private function progressHandler(e:ProgressEvent):void {
-    this.txtContent.text = Math.round(e.bytesLoaded / e.bytesTotal * 100).toString() + "%"
+    txtContent.text = Math.round(e.bytesLoaded / e.bytesTotal * 100).toString() + "%"
 }
 
 private function completeHandler(e:Event):void {
     urlLoader.removeEventListener(ProgressEvent.PROGRESS, progressHandler)
     urlLoader.removeEventListener(Event.COMPLETE, completeHandler)
     try {
-        modPlay.start(urlLoader.data)
+        modPlay = new ModulesPlayerFactory().load(urlLoader.data)
         definedContent = modPlay.tracker
         uiPlaying()
     } catch(ex: Error) {
@@ -110,54 +111,54 @@ private function exSetVolume(volume: Number) {
 
 private function exSetHeader(header: String) {
     definedHeader = header
-    this.txtHeader.text = header
+    txtHeader.text = header
 }
 
 private function exSetContent(content: String) {
     definedContent = content
-    this.txtContent.text = content
+    txtContent.text = content
 }
 
 // UI updates =================================================================
 
 private function uiPaused() {
-    this.btnPause.visible = false
-    this.btnPlay.visible = true
-    this.btnStop.visible = true
+    btnPause.visible = false
+    btnPlay.visible = true
+    btnStop.visible = true
 }
 
 private function uiPlaying() {
-    this.btnPause.visible = true
-    this.btnPlay.visible = false
-    this.btnStop.visible = true
+    btnPause.visible = true
+    btnPlay.visible = false
+    btnStop.visible = true
     uiTextDefined()
 }
 
 private function uiEmpty() {
-    this.txtHeader.text = "INFO"
-    this.txtContent.text = "No module loaded"
+    txtHeader.text = "INFO"
+    txtContent.text = "No module loaded"
 }
 
 private function uiError(error: String) {
     uiPaused()
-    this.txtHeader.text = "ERROR"
-    this.txtContent.text = error
+    txtHeader.text = "ERROR"
+    txtContent.text = error
 }
 
 private function uiPleaseWait() {
-    this.txtHeader.text = "Please wait"
-    this.txtContent.text = "loading..."
+    txtHeader.text = "Please wait"
+    txtContent.text = "loading..."
 }
 
 private function uiTextDefined() {
-    this.txtHeader.text = definedHeader
-    this.txtContent.text = definedContent
+    txtHeader.text = definedHeader
+    txtContent.text = definedContent
 }
 
 private function uiProgressTracker() {
     secondsTimer.start()
     secondsTimer.addEventListener(TimerEvent.TIMER, function() {
-        this.progressSlider.value = modPlay.progressSliderPosition
-        this.txtTime.text = modPlay.progressText
+        progressSlider.value = modPlay.progressSliderPosition
+        txtTime.text = modPlay.progressText
     })
 }
