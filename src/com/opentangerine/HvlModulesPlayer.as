@@ -33,7 +33,7 @@ public class HvlModulesPlayer implements IModulesPlayer {
     }
 
     public function get progressText():String {
-        return ConversionUtil.progressText(player.cur_playTime, player.info_tuneLength)
+        return ConversionUtil.progressText(player.cur_playTime * 1000, player.info_tuneLength * 1000)
     }
 
     public function get progressSliderPosition():Number {
