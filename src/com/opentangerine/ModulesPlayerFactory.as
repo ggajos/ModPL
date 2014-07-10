@@ -3,6 +3,8 @@ import flash.utils.ByteArray;
 
 import hvl.front_panel;
 
+import neoart.flip.ZipFile;
+
 import neoart.flod.FileLoader;
 
 import neoart.flod.FileLoader;
@@ -20,7 +22,7 @@ public class ModulesPlayerFactory {
             return new NeoartModulesPlayer(neoartPlayer, neoartLoader)
         } catch(ex: Error) {
         }
-        hvlPlayer.com_loadTune(stream)
+        hvlPlayer.com_loadTune(uncompressIfNeeded(stream))
         return new HvlModulesPlayer(hvlPlayer)
     }
 
@@ -28,6 +30,15 @@ public class ModulesPlayerFactory {
         return new InitialModulesPlayer()
     }
 
+    private function uncompressIfNeeded(stream: ByteArray) {
+        stream.endian = "littleEndian";
+        stream.position = 0;
+        if (stream.readUnsignedInt() == 67324752) {
+            var archive:ZipFile = new ZipFile(stream);
+            stream = archive.uncompress(archive.entries[0]);
+        }
+        return stream
+    }
 }
 
 }
