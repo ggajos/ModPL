@@ -13,7 +13,11 @@ public class HvlModulesPlayer implements IModulesPlayer {
     }
 
     public function get tracker():String {
-        return "Hvl"
+        if(player.info_format.substring(0, 2).toLowerCase() == 'ahx') {
+            return "Abyss' Highest Experience";
+        } else {
+            return "HivelyTracker"
+        }
     }
 
     public function play():void {
@@ -37,6 +41,7 @@ public class HvlModulesPlayer implements IModulesPlayer {
     }
 
     public function get progressSliderPosition():Number {
+        var length = player.cur_playTime % player.info_tuneLength
         return player.cur_playTime * 100. / player.info_tuneLength
 
     }

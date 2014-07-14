@@ -75,7 +75,7 @@
              text="0:00 / 0:00" />
 
     <mx:HSlider id="progressSlider"
-                x="100" y="55"
+                x="100" y="50"
                 width="300"
                 minimum="0" maximum="100"
                 value="100"
