@@ -108,9 +108,15 @@
                 change="viewUpdateVolume()"/>
     -->
 
-    <mx:Text id="txtFooter"
-             x="100" y="80"
+    <mx:Text x="100" y="70"
              text="by Grzegorz Gajos, based on Christian Corti's 'FLOD'"
+             fontSize="9"
+             textAlign="center"
+             width="300"
+             color="#aaaaaa"/>
+
+    <mx:Text x="100" y="80"
+             text="AHX/HVL replayer by Passing_by"
              fontSize="9"
              textAlign="center"
              width="300"
