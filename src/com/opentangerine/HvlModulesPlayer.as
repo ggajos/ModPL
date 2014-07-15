@@ -13,10 +13,10 @@ public class HvlModulesPlayer implements IModulesPlayer {
     }
 
     public function get tracker():String {
-        if(player.info_format.substring(0, 2).toLowerCase() == 'ahx') {
-            return "Abyss' Highest Experience";
+        if(player.info_format.substring(0, 2).toLowerCase() == 'hv') {
+            return "HivelyTracker";
         } else {
-            return "HivelyTracker"
+            return "Abyss' Highest Experience";
         }
     }
 
