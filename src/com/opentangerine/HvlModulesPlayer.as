@@ -42,7 +42,7 @@ public class HvlModulesPlayer implements IModulesPlayer {
 
     public function get progressSliderPosition():Number {
         var length = player.cur_playTime % player.info_tuneLength
-        return player.cur_playTime * 100. / player.info_tuneLength
+        return player.cur_playTime * 100. / length
 
     }
 }
